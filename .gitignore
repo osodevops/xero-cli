@@ -1,5 +1,5 @@
 /target
-Cargo.lock
+# Cargo.lock is committed for binary crates per Cargo best practice
 *.swp
 *.swo
 *~
