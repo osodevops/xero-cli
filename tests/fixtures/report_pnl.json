@@ -1,0 +1,60 @@
+{
+  "Id": "report-pnl",
+  "Status": "OK",
+  "Reports": [
+    {
+      "ReportID": "ProfitAndLoss",
+      "ReportName": "Profit and Loss",
+      "ReportType": "ProfitAndLoss",
+      "ReportDate": "1 January 2026 to 31 March 2026",
+      "Rows": [
+        {
+          "RowType": "Header",
+          "Cells": [
+            {"Value": "Account"},
+            {"Value": "Amount"}
+          ]
+        },
+        {
+          "RowType": "Section",
+          "Title": "Income",
+          "Rows": [
+            {
+              "RowType": "Row",
+              "Cells": [
+                {"Value": "Sales"},
+                {"Value": "50000.00"}
+              ]
+            }
+          ]
+        },
+        {
+          "RowType": "Section",
+          "Title": "Expenses",
+          "Rows": [
+            {
+              "RowType": "Row",
+              "Cells": [
+                {"Value": "Rent"},
+                {"Value": "5000.00"}
+              ]
+            }
+          ]
+        },
+        {
+          "RowType": "Section",
+          "Title": "Net Profit",
+          "Rows": [
+            {
+              "RowType": "Row",
+              "Cells": [
+                {"Value": "Net Profit"},
+                {"Value": "45000.00"}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

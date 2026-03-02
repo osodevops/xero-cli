@@ -1,0 +1,25 @@
+{
+  "Id": "abc-789",
+  "Status": "OK",
+  "Accounts": [
+    {
+      "AccountID": "acc-001",
+      "Code": "200",
+      "Name": "Sales",
+      "Type": "REVENUE",
+      "Class": "REVENUE",
+      "Status": "ACTIVE",
+      "TaxType": "OUTPUT",
+      "Description": "Income from sales"
+    },
+    {
+      "AccountID": "acc-002",
+      "Code": "400",
+      "Name": "Advertising",
+      "Type": "EXPENSE",
+      "Class": "EXPENSE",
+      "Status": "ACTIVE",
+      "TaxType": "INPUT"
+    }
+  ]
+}

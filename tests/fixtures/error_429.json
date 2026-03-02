@@ -1,0 +1,6 @@
+{
+  "Type": "http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html",
+  "Title": "Too Many Requests",
+  "Status": 429,
+  "Detail": "Rate limit exceeded"
+}

@@ -1,0 +1,51 @@
+{
+  "Id": "abc-123",
+  "Status": "OK",
+  "Invoices": [
+    {
+      "InvoiceID": "inv-001",
+      "InvoiceNumber": "INV-0001",
+      "Type": "ACCREC",
+      "Status": "AUTHORISED",
+      "Contact": {
+        "ContactID": "contact-001",
+        "Name": "Acme Corp"
+      },
+      "LineItems": [
+        {
+          "LineItemID": "li-001",
+          "Description": "Consulting Services",
+          "Quantity": 10.0,
+          "UnitAmount": 150.00,
+          "LineAmount": 1500.00,
+          "TaxAmount": 0.00,
+          "AccountCode": "200"
+        }
+      ],
+      "SubTotal": 1500.00,
+      "TotalTax": 0.00,
+      "Total": 1500.00,
+      "AmountDue": 1500.00,
+      "AmountPaid": 0.00,
+      "CurrencyCode": "GBP",
+      "DueDate": "2026-04-01"
+    },
+    {
+      "InvoiceID": "inv-002",
+      "InvoiceNumber": "INV-0002",
+      "Type": "ACCPAY",
+      "Status": "PAID",
+      "Contact": {
+        "ContactID": "contact-002",
+        "Name": "Supplier Co"
+      },
+      "LineItems": [],
+      "SubTotal": 500.00,
+      "TotalTax": 100.00,
+      "Total": 600.00,
+      "AmountDue": 0.00,
+      "AmountPaid": 600.00,
+      "CurrencyCode": "GBP"
+    }
+  ]
+}

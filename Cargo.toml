@@ -1,0 +1,57 @@
+[package]
+name = "xero-cli"
+version = "0.3.0"
+edition = "2021"
+description = "A fast, intelligent command-line interface for the Xero Accounting API"
+license = "MIT"
+repository = "https://github.com/osodevops/xero-cli"
+keywords = ["xero", "accounting", "cli", "oauth2"]
+categories = ["command-line-utilities"]
+
+[lib]
+name = "xero_cli"
+path = "src/lib.rs"
+
+[[bin]]
+name = "xero"
+path = "src/main.rs"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }
+clap = { version = "4", features = ["derive", "env", "string"] }
+clap_complete = "4"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+toml = "0.8"
+toml_edit = "0.22"
+dirs = "6"
+chrono = { version = "0.4", features = ["serde"] }
+rust_decimal = { version = "1", features = ["serde-with-str"] }
+comfy-table = "7"
+csv = "1"
+oauth2 = "5"
+keyring = { version = "3", features = ["apple-native", "windows-native", "linux-native"] }
+tiny_http = "0.12"
+open = "5"
+uuid = { version = "1", features = ["v4"] }
+url = "2"
+is-terminal = "0.4"
+indicatif = "0.17"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+rusqlite = { version = "0.31", features = ["bundled"] }
+thiserror = "2"
+miette = { version = "7", features = ["fancy"] }
+
+[dev-dependencies]
+wiremock = "0.6"
+assert_cmd = "2"
+predicates = "3"
+tempfile = "3"
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1

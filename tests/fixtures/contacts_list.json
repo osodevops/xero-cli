@@ -1,0 +1,27 @@
+{
+  "Id": "abc-456",
+  "Status": "OK",
+  "Contacts": [
+    {
+      "ContactID": "contact-001",
+      "Name": "Acme Corp",
+      "EmailAddress": "info@acme.com",
+      "ContactStatus": "ACTIVE",
+      "IsCustomer": true,
+      "IsSupplier": false,
+      "Addresses": [
+        {
+          "AddressType": "STREET",
+          "City": "London",
+          "Country": "UK"
+        }
+      ],
+      "Phones": [
+        {
+          "PhoneType": "DEFAULT",
+          "PhoneNumber": "020 1234 5678"
+        }
+      ]
+    }
+  ]
+}

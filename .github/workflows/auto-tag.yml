@@ -1,0 +1,35 @@
+name: Auto Tag
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - Cargo.toml
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check version bump
+        id: version
+        run: |
+          OLD_VERSION=$(git diff HEAD~1 HEAD -- Cargo.toml | grep '^-version' | head -1 | sed 's/.*"\(.*\)".*/\1/' || echo "")
+          NEW_VERSION=$(grep '^version' Cargo.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          if [ -n "$OLD_VERSION" ] && [ "$OLD_VERSION" != "$NEW_VERSION" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create tag
+        if: steps.version.outputs.changed == 'true'
+        run: |
+          git tag "v${{ steps.version.outputs.version }}"
+          git push origin "v${{ steps.version.outputs.version }}"
