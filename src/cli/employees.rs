@@ -8,9 +8,28 @@ use clap::Subcommand;
 #[derive(Subcommand)]
 pub enum EmployeeCommands {
     /// List employees
+    ///
+    /// Retrieve all employees in the organisation. Employees in Xero are
+    /// people who are paid via payroll or who submit expense claims.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero employees list
+  xero employees list --output json
+  xero employees list --compact")]
     List,
+
     /// Get a specific employee
-    Get { id: String },
+    ///
+    /// Retrieve full details for a single employee by their UUID,
+    /// including name, status, and external link information.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero employees get a1b2c3d4-e5f6-7890-abcd-ef1234567890
+  xero employees get a1b2c3d4-e5f6-7890-abcd-ef1234567890 --output json")]
+    Get {
+        /// Employee ID (UUID)
+        id: String,
+    },
 }
 
 impl Tabular for Employee {

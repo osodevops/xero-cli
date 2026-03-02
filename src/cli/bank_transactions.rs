@@ -8,36 +8,85 @@ use clap::Subcommand;
 #[derive(Subcommand)]
 pub enum BankTransactionCommands {
     /// List bank transactions
+    ///
+    /// Retrieve bank transactions (spend or receive money) with optional
+    /// filtering by bank account, date range, and custom where clause.
+    /// Results include SPEND and RECEIVE transaction types.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero bank-transactions list
+  xero bank-transactions list --account 7d05a53d-613d-4eb2-a2fc-dcb6adb80b80
+  xero bank-transactions list --from 2024-01-01
+  xero bank-transactions list --where 'Type==\"SPEND\"' --output json
+  xero bank-transactions list --account 7d05a53d-... --from 2024-06-01 --where 'Status==\"AUTHORISED\"'")]
     List {
-        /// Filter by bank account ID
+        /// Filter by bank account ID (UUID) to show only transactions for that account
         #[arg(long)]
         account: Option<String>,
-        /// Filter from date (YYYY-MM-DD)
+        /// Filter from date in YYYY-MM-DD format (inclusive)
         #[arg(long)]
         from: Option<String>,
-        /// Custom where clause
+        /// Custom Xero where clause filter expression
+        ///
+        /// Uses Xero's filter syntax: Field==Value, Field!=Value,
+        /// Field.Contains("value"), Field.StartsWith("value").
+        /// Multiple conditions joined with &&.
+        /// Example: --where 'Type=="SPEND"&&Status=="AUTHORISED"'
         #[arg(long, name = "where")]
         where_clause: Option<String>,
     },
+
     /// Get a specific bank transaction
+    ///
+    /// Retrieve full details for a single bank transaction by its UUID,
+    /// including line items, contact, and bank account information.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero bank-transactions get b5e8f1a2-3c4d-5678-9012-abcdef345678
+  xero bank-transactions get b5e8f1a2-... --output json")]
     Get {
-        /// Bank transaction ID
+        /// Bank transaction ID (UUID)
         id: String,
     },
+
     /// Create a bank transaction
+    ///
+    /// Create a new bank transaction from a JSON file. The file must
+    /// contain valid Xero BankTransaction JSON, including Type (SPEND
+    /// or RECEIVE), Contact, BankAccount, and at least one LineItem.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero bank-transactions create --file spend.json
+  xero bank-transactions create --file receive.json --output json")]
     Create {
-        /// JSON file with transaction data
+        /// Path to a JSON file containing the bank transaction payload
         #[arg(long)]
         file: String,
     },
+
     /// Delete a bank transaction
+    ///
+    /// Delete a bank transaction by setting its status to DELETED.
+    /// The record is not removed; it remains visible with a DELETED status.
+    /// Only AUTHORISED transactions can be deleted.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero bank-transactions delete b5e8f1a2-3c4d-5678-9012-abcdef345678")]
     Delete {
-        /// Bank transaction ID
+        /// Bank transaction ID (UUID) to delete
         id: String,
     },
+
     /// View bank transaction history
+    ///
+    /// Retrieve the audit history for a bank transaction, showing all
+    /// status changes, modifications, and user actions.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero bank-transactions history b5e8f1a2-3c4d-5678-9012-abcdef345678
+  xero bank-transactions history b5e8f1a2-... --output json")]
     History {
-        /// Bank transaction ID
+        /// Bank transaction ID (UUID)
         id: String,
     },
 }

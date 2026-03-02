@@ -8,19 +8,61 @@ use clap::Subcommand;
 #[derive(Subcommand)]
 pub enum ManualJournalCommands {
     /// List manual journals
+    ///
+    /// Retrieve all manual journals in the organisation.
+    /// Manual journals are used to record adjustments or transactions
+    /// that do not fit standard Xero transaction types.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero manual-journals list
+  xero manual-journals list --output json")]
     List,
+
     /// Get a specific manual journal
-    Get { id: String },
+    ///
+    /// Retrieve full details for a single manual journal by its UUID,
+    /// including all journal lines and their account allocations.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero manual-journals get a1b2c3d4-e5f6-7890-abcd-ef1234567890
+  xero manual-journals get a1b2c3d4-e5f6-7890-abcd-ef1234567890 --output json")]
+    Get {
+        /// Manual journal ID (UUID)
+        id: String,
+    },
+
     /// Create a manual journal
+    ///
+    /// Create a new manual journal from a JSON file.
+    /// The file must contain a valid manual journal payload with a narration
+    /// and at least two journal lines that balance to zero.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero manual-journals create --file journal.json
+  xero manual-journals create --file adjustments/year-end.json --output json")]
     Create {
+        /// Path to JSON file containing the manual journal payload
         #[arg(long)]
         file: String,
     },
+
     /// Update a manual journal
+    ///
+    /// Update an existing manual journal by providing a JSON file with the
+    /// updated payload, or change just the narration inline with --narration.
+    /// If --file is given it takes precedence over --narration.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero manual-journals update a1b2c3d4-... --narration \"Corrected year-end adjustment\"
+  xero manual-journals update a1b2c3d4-... --file updated-journal.json
+  xero manual-journals update a1b2c3d4-... --file updated-journal.json --output json")]
     Update {
+        /// Manual journal ID (UUID)
         id: String,
+        /// Path to JSON file with updated journal data (takes precedence over --narration)
         #[arg(long)]
         file: Option<String>,
+        /// New narration (description) for the manual journal
         #[arg(long)]
         narration: Option<String>,
     },

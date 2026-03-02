@@ -8,62 +8,119 @@ use clap::Subcommand;
 #[derive(Subcommand)]
 pub enum ItemCommands {
     /// List items
+    ///
+    /// Retrieve items from the Xero inventory with optional filtering via a
+    /// custom where clause. Returns all tracked and untracked items.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero items list
+  xero items list --where 'IsSold==true'
+  xero items list --where 'Code.StartsWith(\"WIDGET\")' --output json")]
     List {
-        /// Custom where clause
+        /// Custom Xero where clause filter expression
+        ///
+        /// Uses Xero's filter syntax: Field==Value, Field!=Value,
+        /// Field.Contains("value"), Field.StartsWith("value").
+        /// Multiple conditions joined with &&.
+        /// Example: --where 'IsSold==true&&IsPurchased==true'
         #[arg(long, name = "where")]
         where_clause: Option<String>,
     },
+
     /// Get a specific item
+    ///
+    /// Retrieve full details for a single item by its UUID, including
+    /// sales details, purchase details, and tracking information.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero items get f3c7b4e2-1234-5678-abcd-ef9876543210
+  xero items get f3c7b4e2-... --output json")]
     Get {
-        /// Item ID
+        /// Item ID (UUID)
         id: String,
     },
+
     /// Create an item
+    ///
+    /// Create a new inventory item with a unique code and name. Optionally
+    /// set a description, sale/purchase unit prices, and the account codes
+    /// for revenue and cost of goods sold.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero items create --code WIDGET-01 --name \"Blue Widget\"
+  xero items create --code SVC-100 --name \"Consulting Hour\" --sale-price 150.00 --sale-account 200
+  xero items create --code MAT-50 --name \"Raw Steel\" --purchase-price 45.00 --purchase-account 630
+  xero items create --code PART-A --name \"Part A\" --description \"Replacement part\" --sale-price 25.00 --sale-account 200 --purchase-price 10.00 --purchase-account 630")]
     Create {
-        /// Item code
+        /// Unique item code (e.g. WIDGET-01, SKU-1234)
         #[arg(long)]
         code: String,
-        /// Item name
+        /// Display name for the item
         #[arg(long)]
         name: String,
-        /// Description
+        /// Free-text description of the item
         #[arg(long)]
         description: Option<String>,
-        /// Sale unit price
+        /// Sale unit price (decimal, e.g. 25.00)
         #[arg(long)]
         sale_price: Option<String>,
-        /// Sale account code
+        /// Revenue account code for sales (e.g. 200, 400)
         #[arg(long)]
         sale_account: Option<String>,
-        /// Purchase unit price
+        /// Purchase unit price (decimal, e.g. 10.00)
         #[arg(long)]
         purchase_price: Option<String>,
-        /// Purchase account code
+        /// Cost-of-goods-sold account code for purchases (e.g. 630, 300)
         #[arg(long)]
         purchase_account: Option<String>,
     },
+
     /// Update an item
+    ///
+    /// Update an existing item's name, sale price, or purchase price.
+    /// Only the fields you provide will be changed; all other fields
+    /// remain untouched.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero items update f3c7b4e2-... --name \"Red Widget\"
+  xero items update f3c7b4e2-... --sale-price 175.00
+  xero items update f3c7b4e2-... --name \"Updated Widget\" --sale-price 30.00 --purchase-price 12.50")]
     Update {
-        /// Item ID
+        /// Item ID (UUID) to update
         id: String,
-        /// New name
+        /// New display name for the item
         #[arg(long)]
         name: Option<String>,
-        /// New sale price
+        /// New sale unit price (decimal, e.g. 30.00)
         #[arg(long)]
         sale_price: Option<String>,
-        /// New purchase price
+        /// New purchase unit price (decimal, e.g. 12.50)
         #[arg(long)]
         purchase_price: Option<String>,
     },
+
     /// Delete an item
+    ///
+    /// Permanently delete an item from the Xero inventory.
+    /// The item must not be used on any transactions.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero items delete f3c7b4e2-1234-5678-abcd-ef9876543210")]
     Delete {
-        /// Item ID
+        /// Item ID (UUID) to delete
         id: String,
     },
+
     /// View item history
+    ///
+    /// Retrieve the audit history for an item, showing all modifications
+    /// and user actions.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero items history f3c7b4e2-1234-5678-abcd-ef9876543210
+  xero items history f3c7b4e2-... --output json")]
     History {
-        /// Item ID
+        /// Item ID (UUID)
         id: String,
     },
 }

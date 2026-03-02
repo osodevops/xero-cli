@@ -8,26 +8,60 @@ use clap::Subcommand;
 #[derive(Subcommand)]
 pub enum PrepaymentCommands {
     /// List prepayments
+    ///
+    /// Retrieve all prepayments for the connected Xero organisation.
+    /// Prepayments represent payments made to a contact before an invoice
+    /// has been raised (e.g. deposits or advance payments).
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero prepayments list
+  xero prepayments list --output json
+  xero prepayments list --compact")]
     List,
+
     /// Get a specific prepayment
+    ///
+    /// Retrieve full details for a single prepayment by its UUID,
+    /// including allocations, line items, and remaining credit.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero prepayments get a1f02b7c-51d8-4e2a-b6cc-4ae9e7d5a123
+  xero prepayments get a1f02b7c-51d8-4e2a-b6cc-4ae9e7d5a123 --output json")]
     Get {
-        /// Prepayment ID
+        /// Prepayment ID (UUID)
         id: String,
     },
+
     /// Allocate a prepayment to an invoice
+    ///
+    /// Apply part or all of a prepayment's remaining credit against an
+    /// outstanding invoice. The amount must not exceed the remaining credit
+    /// on the prepayment or the amount due on the invoice.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero prepayments allocate a1f02b7c-... --invoice 243216c5-... --amount 250.00
+  xero prepayments allocate a1f02b7c-... --invoice 243216c5-... --amount 75.50 --output json")]
     Allocate {
-        /// Prepayment ID
+        /// Prepayment ID (UUID) to allocate from
         id: String,
-        /// Invoice ID to allocate to
+        /// Invoice ID (UUID) to allocate the prepayment against
         #[arg(long)]
         invoice: String,
-        /// Amount to allocate
+        /// Amount to allocate (must not exceed remaining credit or invoice balance)
         #[arg(long)]
         amount: String,
     },
+
     /// View prepayment history
+    ///
+    /// Retrieve the audit history for a prepayment, showing all changes
+    /// and events recorded against it.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero prepayments history a1f02b7c-51d8-4e2a-b6cc-4ae9e7d5a123
+  xero prepayments history a1f02b7c-... --output json")]
     History {
-        /// Prepayment ID
+        /// Prepayment ID (UUID)
         id: String,
     },
 }

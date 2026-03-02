@@ -8,6 +8,19 @@ use clap::Subcommand;
 #[derive(Subcommand)]
 pub enum PaymentServiceCommands {
     /// List payment services
+    ///
+    /// Retrieves all payment services (e.g. PayPal, Stripe) registered in your
+    /// Xero organisation. Each service includes its ID, display name, and type.
+    #[command(after_long_help = "\
+EXAMPLES:
+  # List all payment services in table format
+  xero payment-services list
+
+  # Output as JSON for scripting
+  xero payment-services list -o json
+
+  # Compact table output
+  xero payment-services list --compact")]
     List,
 }
 

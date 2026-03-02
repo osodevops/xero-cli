@@ -1,94 +1,100 @@
-use clap::Subcommand;
+use clap::{CommandFactory, Subcommand};
 use clap_complete::{generate, Shell};
 
 #[derive(Subcommand)]
 pub enum CompletionCommands {
     /// Generate bash completions
+    ///
+    /// Print bash completion script to stdout.
+    /// Add to your shell profile: eval "$(xero completions bash)"
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero completions bash > ~/.local/share/bash-completion/completions/xero
+  eval \"$(xero completions bash)\"")]
     Bash,
+
     /// Generate zsh completions
+    ///
+    /// Print zsh completion script to stdout.
+    /// Save to a file in your $fpath.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero completions zsh > ~/.zfunc/_xero
+  xero completions zsh > \"${fpath[1]}/_xero\"")]
     Zsh,
+
     /// Generate fish completions
+    ///
+    /// Print fish completion script to stdout.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero completions fish > ~/.config/fish/completions/xero.fish")]
     Fish,
+
+    /// Generate man pages
+    ///
+    /// Generate man page files for xero and all subcommands.
+    /// Creates individual .1 files (e.g. xero.1, xero-invoices.1, xero-invoices-list.1).
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero completions man --output-dir /usr/local/share/man/man1
+  xero completions man --output-dir ./man
+  man ./man/xero.1
+  man ./man/xero-invoices-list.1")]
+    Man {
+        /// Directory to write man page files into (created if it does not exist)
+        #[arg(long)]
+        output_dir: String,
+    },
 }
 
 pub fn execute(command: CompletionCommands) -> miette::Result<()> {
-    let shell = match command {
-        CompletionCommands::Bash => Shell::Bash,
-        CompletionCommands::Zsh => Shell::Zsh,
-        CompletionCommands::Fish => Shell::Fish,
-    };
+    match command {
+        CompletionCommands::Bash | CompletionCommands::Zsh | CompletionCommands::Fish => {
+            let shell = match command {
+                CompletionCommands::Bash => Shell::Bash,
+                CompletionCommands::Zsh => Shell::Zsh,
+                CompletionCommands::Fish => Shell::Fish,
+                _ => unreachable!(),
+            };
 
-    // We need to build a clap Command to generate completions
-    // Since we can't easily get the full command here, we create a minimal one
-    let mut cmd = build_cli_command();
-    generate(shell, &mut cmd, "xero", &mut std::io::stdout());
+            let mut cmd = crate::cli::Cli::command();
+            generate(shell, &mut cmd, "xero", &mut std::io::stdout());
+        }
+        CompletionCommands::Man { output_dir } => {
+            let cmd = crate::cli::Cli::command();
+            let out = std::path::PathBuf::from(&output_dir);
+            std::fs::create_dir_all(&out)
+                .map_err(|e| miette::miette!("Failed to create output directory: {e}"))?;
+            generate_man_pages(&cmd, &out, "xero")?;
+            eprintln!("Man pages written to {output_dir}");
+        }
+    }
 
     Ok(())
 }
 
-fn build_cli_command() -> clap::Command {
-    use clap::{Arg, Command};
+fn generate_man_pages(
+    cmd: &clap::Command,
+    out_dir: &std::path::Path,
+    prefix: &str,
+) -> miette::Result<()> {
+    let man = clap_mangen::Man::new(cmd.clone());
+    let filename = format!("{prefix}.1");
+    let path = out_dir.join(&filename);
+    let mut buf = Vec::new();
+    man.render(&mut buf)
+        .map_err(|e| miette::miette!("Failed to render man page for {prefix}: {e}"))?;
+    std::fs::write(&path, buf)
+        .map_err(|e| miette::miette!("Failed to write {}: {e}", path.display()))?;
 
-    Command::new("xero")
-        .about("A fast CLI for the Xero Accounting API")
-        .subcommand(
-            Command::new("auth")
-                .about("Manage authentication")
-                .subcommand(Command::new("login").about("Interactive PKCE login"))
-                .subcommand(Command::new("status").about("Show auth status"))
-                .subcommand(Command::new("refresh").about("Force token refresh"))
-                .subcommand(Command::new("logout").about("Clear stored tokens"))
-                .subcommand(Command::new("setup-m2m").about("Configure client credentials"))
-                .subcommand(Command::new("scopes").about("Manage OAuth scopes")),
-        )
-        .subcommand(
-            Command::new("invoices")
-                .about("Manage invoices")
-                .subcommand(Command::new("list").about("List invoices"))
-                .subcommand(Command::new("get").about("Get invoice").arg(Arg::new("id")))
-                .subcommand(Command::new("create").about("Create invoice"))
-                .subcommand(Command::new("update").about("Update invoice")),
-        )
-        .subcommand(
-            Command::new("contacts")
-                .about("Manage contacts")
-                .subcommand(Command::new("list").about("List contacts"))
-                .subcommand(Command::new("get").about("Get contact").arg(Arg::new("id")))
-                .subcommand(Command::new("create").about("Create contact"))
-                .subcommand(Command::new("update").about("Update contact")),
-        )
-        .subcommand(
-            Command::new("accounts")
-                .about("Manage accounts")
-                .subcommand(Command::new("list").about("List accounts"))
-                .subcommand(Command::new("get").about("Get account").arg(Arg::new("id")))
-                .subcommand(Command::new("create").about("Create account"))
-                .subcommand(Command::new("archive").about("Archive account")),
-        )
-        .subcommand(
-            Command::new("reports")
-                .about("View financial reports")
-                .subcommand(Command::new("profit-and-loss").about("P&L report"))
-                .subcommand(Command::new("balance-sheet").about("Balance sheet"))
-                .subcommand(Command::new("trial-balance").about("Trial balance"))
-                .subcommand(Command::new("bank-summary").about("Bank summary"))
-                .subcommand(Command::new("budget-summary").about("Budget summary"))
-                .subcommand(Command::new("executive-summary").about("Executive summary"))
-                .subcommand(Command::new("aged-receivables").about("Aged receivables"))
-                .subcommand(Command::new("aged-payables").about("Aged payables")),
-        )
-        .subcommand(
-            Command::new("config")
-                .about("Manage configuration")
-                .subcommand(Command::new("init").about("Initialize config"))
-                .subcommand(Command::new("show").about("Show config"))
-                .subcommand(Command::new("set").about("Set config value")),
-        )
-        .subcommand(
-            Command::new("completions")
-                .about("Generate shell completions")
-                .subcommand(Command::new("bash").about("Bash completions"))
-                .subcommand(Command::new("zsh").about("Zsh completions"))
-                .subcommand(Command::new("fish").about("Fish completions")),
-        )
+    for sub in cmd.get_subcommands() {
+        if sub.get_name() == "help" {
+            continue;
+        }
+        let sub_prefix = format!("{prefix}-{}", sub.get_name());
+        generate_man_pages(sub, out_dir, &sub_prefix)?;
+    }
+
+    Ok(())
 }

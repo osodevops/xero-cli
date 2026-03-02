@@ -11,7 +11,10 @@ fn help_flag_works() {
         .success()
         .stdout(predicate::str::contains(
             "A fast CLI for the Xero Accounting API",
-        ));
+        ))
+        .stdout(predicate::str::contains("GETTING STARTED"))
+        .stdout(predicate::str::contains("ENVIRONMENT VARIABLES"))
+        .stdout(predicate::str::contains("EXAMPLES"));
 }
 
 #[test]
@@ -21,7 +24,7 @@ fn version_flag_works() {
         .arg("--version")
         .assert()
         .success()
-        .stdout(predicate::str::contains("0.3.0"));
+        .stdout(predicate::str::contains("0.4.0"));
 }
 
 #[test]
@@ -502,4 +505,64 @@ fn invalid_output_format() {
         .args(["--output", "xml", "invoices", "list"])
         .assert()
         .failure();
+}
+
+#[test]
+fn short_help_is_concise() {
+    // -h should NOT include EXAMPLES section (only --help shows after_long_help)
+    Command::cargo_bin("xero")
+        .unwrap()
+        .arg("-h")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(
+            "A fast CLI for the Xero Accounting API",
+        ))
+        .stdout(predicate::str::contains("EXAMPLES").not());
+}
+
+#[test]
+fn invoices_list_long_help() {
+    Command::cargo_bin("xero")
+        .unwrap()
+        .args(["invoices", "list", "--help"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("EXAMPLES"))
+        .stdout(predicate::str::contains("DRAFT"))
+        .stdout(predicate::str::contains("AUTHORISED"));
+}
+
+#[test]
+fn man_page_generation() {
+    let dir = tempfile::tempdir().unwrap();
+    let out = dir.path().to_str().unwrap();
+
+    Command::cargo_bin("xero")
+        .unwrap()
+        .args(["completions", "man", "--output-dir", out])
+        .assert()
+        .success();
+
+    // Verify key man pages were created
+    assert!(dir.path().join("xero.1").exists());
+    assert!(dir.path().join("xero-invoices.1").exists());
+    assert!(dir.path().join("xero-invoices-list.1").exists());
+    assert!(dir.path().join("xero-contacts.1").exists());
+    assert!(dir.path().join("xero-auth.1").exists());
+    assert!(dir.path().join("xero-auth-login.1").exists());
+    assert!(dir.path().join("xero-reports.1").exists());
+    assert!(dir.path().join("xero-completions.1").exists());
+    assert!(dir.path().join("xero-completions-man.1").exists());
+
+    // Count total man pages — should be 100+ (xero + 34 commands + all subcommands)
+    let count = std::fs::read_dir(dir.path())
+        .unwrap()
+        .filter(|e| {
+            e.as_ref()
+                .map(|e| e.path().extension().map(|ext| ext == "1").unwrap_or(false))
+                .unwrap_or(false)
+        })
+        .count();
+    assert!(count >= 100, "Expected 100+ man pages, got {count}");
 }

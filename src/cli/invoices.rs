@@ -8,11 +8,22 @@ use clap::Subcommand;
 #[derive(Subcommand)]
 pub enum InvoiceCommands {
     /// List invoices
+    ///
+    /// Retrieve invoices with optional filtering by status, contact, date range,
+    /// and custom where clauses. Results are paginated — use --all-pages to fetch all.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero invoices list
+  xero invoices list --status AUTHORISED
+  xero invoices list --status PAID --contact \"Acme Corp\"
+  xero invoices list --from 2024-01-01 --to 2024-06-30
+  xero invoices list --where \"Type==\\\"ACCREC\\\"\" --order \"DueDate DESC\"
+  xero invoices list --output json --all-pages")]
     List {
-        /// Filter by status (DRAFT, SUBMITTED, AUTHORISED, PAID, VOIDED)
+        /// Filter by status: DRAFT, SUBMITTED, AUTHORISED, PAID, VOIDED, DELETED
         #[arg(long)]
         status: Option<String>,
-        /// Filter by contact name or ID
+        /// Filter by contact name or contact ID (UUID)
         #[arg(long)]
         contact: Option<String>,
         /// Filter from date (YYYY-MM-DD)
@@ -21,41 +32,73 @@ pub enum InvoiceCommands {
         /// Filter to date (YYYY-MM-DD)
         #[arg(long)]
         to: Option<String>,
-        /// Custom where clause
+        /// Custom Xero where clause filter expression
+        ///
+        /// Uses Xero's filter syntax: Field==Value, Field!=Value,
+        /// Field.Contains("value"), Field.StartsWith("value").
+        /// Multiple conditions joined with &&.
+        /// Example: --where 'Type=="ACCREC"&&Status=="AUTHORISED"'
         #[arg(long, name = "where")]
         where_clause: Option<String>,
-        /// Order by (e.g. "DueDate DESC")
+        /// Order by field and direction (e.g. "DueDate DESC", "InvoiceNumber ASC")
         #[arg(long)]
         order: Option<String>,
     },
+
     /// Get a specific invoice
+    ///
+    /// Retrieve full details for a single invoice by its UUID.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero invoices get 243216c5-369e-4b40-b8d7-c9a3d50c2a12
+  xero invoices get 243216c5-369e-4b40-b8d7-c9a3d50c2a12 --output json")]
     Get {
-        /// Invoice ID
+        /// Invoice ID (UUID)
         id: String,
     },
+
     /// Create an invoice
+    ///
+    /// Create a new invoice either from a JSON file or inline with flags.
+    /// Inline creation builds an ACCREC (accounts receivable / sales) invoice.
+    /// For complex invoices or ACCPAY (bills), use --file with a JSON payload.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero invoices create --contact \"Acme Corp\" --line-item \"Consulting,10,150.00\"
+  xero invoices create --contact \"Acme Corp\" --line-item \"Design,5,200.00\" --due-date 2024-12-31
+  xero invoices create --file invoice.json")]
     Create {
-        /// JSON file with invoice data
+        /// Path to JSON file with full invoice data
         #[arg(long)]
         file: Option<String>,
-        /// Contact name for inline creation
+        /// Contact name for inline creation (required unless using --file)
         #[arg(long)]
         contact: Option<String>,
-        /// Line items: "Description,Quantity,UnitAmount"
+        /// Line items in format "Description,Quantity,UnitAmount" (repeatable)
         #[arg(long)]
         line_item: Vec<String>,
-        /// Due date (YYYY-MM-DD)
+        /// Due date in YYYY-MM-DD format
         #[arg(long)]
         due_date: Option<String>,
     },
+
     /// Update an invoice
+    ///
+    /// Update an existing invoice by changing its status or providing a JSON payload.
+    /// Common status transitions: DRAFT -> SUBMITTED -> AUTHORISED.
+    /// Use VOIDED to void an authorised invoice.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero invoices update 243216c5-... --status AUTHORISED
+  xero invoices update 243216c5-... --status VOIDED
+  xero invoices update 243216c5-... --file updates.json")]
     Update {
-        /// Invoice ID
+        /// Invoice ID (UUID)
         id: String,
-        /// New status
+        /// New status: DRAFT, SUBMITTED, AUTHORISED, VOIDED
         #[arg(long)]
         status: Option<String>,
-        /// JSON file with update data
+        /// Path to JSON file with update data
         #[arg(long)]
         file: Option<String>,
     },

@@ -8,9 +8,28 @@ use clap::Subcommand;
 #[derive(Subcommand)]
 pub enum BudgetCommands {
     /// List budgets
+    ///
+    /// Retrieve all budgets configured in the connected Xero organisation.
+    /// Each budget includes its type and description.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero budgets list
+  xero budgets list --output json
+  xero budgets list --compact")]
     List,
+
     /// Get a specific budget
-    Get { id: String },
+    ///
+    /// Retrieve full details for a single budget by its UUID, including
+    /// budget lines and tracking categories.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero budgets get 5a8e3d7c-1f2b-4a9e-b6c8-0d4e7f9a1b3c
+  xero budgets get 5a8e3d7c-1f2b-4a9e-b6c8-0d4e7f9a1b3c --output json")]
+    Get {
+        /// Budget ID (UUID)
+        id: String,
+    },
 }
 
 impl Tabular for Budget {

@@ -9,45 +9,92 @@ use clap::Subcommand;
 #[derive(Subcommand)]
 pub enum PaymentCommands {
     /// List payments
+    ///
+    /// Retrieve payments with optional filtering by invoice ID or a custom
+    /// where clause. Returns all matching payments from the Xero organisation.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero payments list
+  xero payments list --invoice 243216c5-369e-4b40-b8d7-c9a3d50c2a12
+  xero payments list --where 'Status==\"AUTHORISED\"'
+  xero payments list --where 'Amount>1000.00' --output json")]
     List {
-        /// Filter by invoice ID
+        /// Filter by invoice ID (UUID) to show only payments against that invoice
         #[arg(long)]
         invoice: Option<String>,
-        /// Custom where clause
+        /// Custom Xero where clause filter expression
+        ///
+        /// Uses Xero's filter syntax: Field==Value, Field!=Value,
+        /// Field.Contains("value"), Field.StartsWith("value").
+        /// Multiple conditions joined with &&.
+        /// Example: --where 'Status=="AUTHORISED"&&Amount>500'
         #[arg(long, name = "where")]
         where_clause: Option<String>,
     },
+
     /// Get a specific payment
+    ///
+    /// Retrieve full details for a single payment by its UUID.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero payments get a1b2c3d4-e5f6-7890-abcd-ef1234567890
+  xero payments get a1b2c3d4-e5f6-7890-abcd-ef1234567890 --output json")]
     Get {
-        /// Payment ID
+        /// Payment ID (UUID)
         id: String,
     },
+
     /// Create a payment
+    ///
+    /// Apply a payment to an existing invoice. Requires the invoice ID,
+    /// the bank account ID to pay from, and the payment amount. Optionally
+    /// set a payment date and reference string.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero payments create --invoice 243216c5-... --account 7d05a53d-... --amount 500.00
+  xero payments create --invoice 243216c5-... --account 7d05a53d-... --amount 250.00 --date 2024-06-15
+  xero payments create --invoice 243216c5-... --account 7d05a53d-... --amount 100.00 --reference \"June payment\"")]
     Create {
-        /// Invoice ID to pay
+        /// Invoice ID (UUID) to apply the payment against
         #[arg(long)]
         invoice: String,
-        /// Account ID to pay from
+        /// Bank account ID (UUID) to pay from
         #[arg(long)]
         account: String,
-        /// Payment amount
+        /// Payment amount (decimal, e.g. 150.00)
         #[arg(long)]
         amount: String,
-        /// Payment date (YYYY-MM-DD)
+        /// Payment date in YYYY-MM-DD format (defaults to today if omitted)
         #[arg(long)]
         date: Option<String>,
-        /// Payment reference
+        /// Free-text reference that appears on the payment
         #[arg(long)]
         reference: Option<String>,
     },
+
     /// Delete (reverse) a payment
+    ///
+    /// Reverse an existing payment by setting its status to DELETED.
+    /// This does not remove the record; the payment remains visible with
+    /// a DELETED status.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero payments delete a1b2c3d4-e5f6-7890-abcd-ef1234567890")]
     Delete {
-        /// Payment ID
+        /// Payment ID (UUID) to reverse
         id: String,
     },
+
     /// View payment history
+    ///
+    /// Retrieve the audit history for a payment, showing all status
+    /// changes, modifications, and user actions.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero payments history a1b2c3d4-e5f6-7890-abcd-ef1234567890
+  xero payments history a1b2c3d4-... --output json")]
     History {
-        /// Payment ID
+        /// Payment ID (UUID)
         id: String,
     },
 }

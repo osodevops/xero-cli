@@ -8,26 +8,59 @@ use clap::Subcommand;
 #[derive(Subcommand)]
 pub enum OverpaymentCommands {
     /// List overpayments
+    ///
+    /// Retrieve all overpayments for the connected Xero organisation.
+    /// Overpayments arise when a contact is paid more than is owed.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero overpayments list
+  xero overpayments list --output json
+  xero overpayments list --compact")]
     List,
+
     /// Get a specific overpayment
+    ///
+    /// Retrieve full details for a single overpayment by its UUID,
+    /// including allocations, line items, and remaining credit.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero overpayments get 8c0e4afe-3b0d-4a38-85fc-a1b20928a6e3
+  xero overpayments get 8c0e4afe-3b0d-4a38-85fc-a1b20928a6e3 --output json")]
     Get {
-        /// Overpayment ID
+        /// Overpayment ID (UUID)
         id: String,
     },
+
     /// Allocate an overpayment to an invoice
+    ///
+    /// Apply part or all of an overpayment's remaining credit against an
+    /// outstanding invoice. The amount must not exceed the remaining credit
+    /// on the overpayment or the amount due on the invoice.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero overpayments allocate 8c0e4afe-... --invoice 243216c5-... --amount 150.00
+  xero overpayments allocate 8c0e4afe-... --invoice 243216c5-... --amount 50.00 --output json")]
     Allocate {
-        /// Overpayment ID
+        /// Overpayment ID (UUID) to allocate from
         id: String,
-        /// Invoice ID to allocate to
+        /// Invoice ID (UUID) to allocate the overpayment against
         #[arg(long)]
         invoice: String,
-        /// Amount to allocate
+        /// Amount to allocate (must not exceed remaining credit or invoice balance)
         #[arg(long)]
         amount: String,
     },
+
     /// View overpayment history
+    ///
+    /// Retrieve the audit history for an overpayment, showing all changes
+    /// and events recorded against it.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero overpayments history 8c0e4afe-3b0d-4a38-85fc-a1b20928a6e3
+  xero overpayments history 8c0e4afe-... --output json")]
     History {
-        /// Overpayment ID
+        /// Overpayment ID (UUID)
         id: String,
     },
 }

@@ -8,14 +8,33 @@ use clap::Subcommand;
 #[derive(Subcommand)]
 pub enum JournalCommands {
     /// List journals
+    ///
+    /// Retrieve system journals which record the double-entry accounting
+    /// movements for every transaction. Unlike most Xero endpoints, journals
+    /// use offset-based pagination rather than page numbers. Use --offset to
+    /// resume from a specific position, or --all-pages to fetch everything.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero journals list
+  xero journals list --offset 100
+  xero journals list --all-pages
+  xero journals list --output json --offset 500")]
     List {
-        /// Offset for pagination (journals use offset-based pagination)
+        /// Offset for pagination (journals use offset-based pagination, not page numbers)
         #[arg(long)]
         offset: Option<u64>,
     },
+
     /// Get a specific journal
+    ///
+    /// Retrieve full details for a single journal by its UUID, including
+    /// all journal lines with their account codes, debits, and credits.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero journals get d4e5f6a7-8b9c-0d1e-2f3a-4b5c6d7e8f9a
+  xero journals get d4e5f6a7-8b9c-0d1e-2f3a-4b5c6d7e8f9a --output json")]
     Get {
-        /// Journal ID
+        /// Journal ID (UUID)
         id: String,
     },
 }

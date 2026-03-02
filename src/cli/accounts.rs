@@ -8,46 +8,78 @@ use clap::Subcommand;
 #[derive(Subcommand)]
 pub enum AccountCommands {
     /// List accounts
+    ///
+    /// Retrieve accounts from the chart of accounts with optional type and class filters.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero accounts list
+  xero accounts list --type BANK
+  xero accounts list --class REVENUE --order \"Code ASC\"
+  xero accounts list --where 'Status==\"ACTIVE\"' --output json")]
     List {
-        /// Filter by type (BANK, REVENUE, EXPENSE, etc.)
+        /// Filter by account type: BANK, CURRENT, CURRLIAB, DEPRECIATN, DIRECTCOSTS,
+        /// EQUITY, EXPENSE, FIXED, INVENTORY, LIABILITY, NONCURRENT, OTHERINCOME,
+        /// OVERHEADS, PREPAYMENT, REVENUE, SALES, TERMLIAB, PAYGLIABILITY,
+        /// SUPERANNUATIONEXPENSE, SUPERANNUATIONLIABILITY, WAGESEXPENSE
         #[arg(long, name = "type")]
         account_type: Option<String>,
-        /// Filter by class (ASSET, EQUITY, EXPENSE, LIABILITY, REVENUE)
+        /// Filter by account class: ASSET, EQUITY, EXPENSE, LIABILITY, REVENUE
         #[arg(long)]
         class: Option<String>,
-        /// Custom where clause
+        /// Custom Xero where clause filter expression
         #[arg(long, name = "where")]
         where_clause: Option<String>,
-        /// Order by
+        /// Order by field and direction (e.g. "Code ASC", "Name DESC")
         #[arg(long)]
         order: Option<String>,
     },
+
     /// Get a specific account
+    ///
+    /// Retrieve full details for a single account by its UUID.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero accounts get 7d05a53d-613d-4eb2-a2fc-dcb6adb80b80")]
     Get {
-        /// Account ID
+        /// Account ID (UUID)
         id: String,
     },
+
     /// Create an account
+    ///
+    /// Add a new account to the chart of accounts.
+    /// Name, code, and type are required.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero accounts create --name \"Office Supplies\" --code 429 --type EXPENSE
+  xero accounts create --name \"Sales Income\" --code 200 --type REVENUE --tax-type OUTPUT")]
     Create {
         /// Account name
         #[arg(long)]
         name: String,
-        /// Account code
+        /// Account code (must be unique within the organisation)
         #[arg(long)]
         code: String,
-        /// Account type
+        /// Account type (see `xero accounts list --help` for valid types)
         #[arg(long, name = "type")]
         account_type: String,
-        /// Description
+        /// Account description
         #[arg(long)]
         description: Option<String>,
-        /// Tax type
+        /// Tax type code (e.g. OUTPUT, INPUT, NONE)
         #[arg(long)]
         tax_type: Option<String>,
     },
+
     /// Archive an account
+    ///
+    /// Archive an account so it no longer appears in active lists.
+    /// Archived accounts can still be viewed but cannot be used in new transactions.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero accounts archive 7d05a53d-613d-4eb2-a2fc-dcb6adb80b80")]
     Archive {
-        /// Account ID
+        /// Account ID (UUID)
         id: String,
     },
 }

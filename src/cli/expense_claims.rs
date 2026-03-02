@@ -8,24 +8,80 @@ use clap::Subcommand;
 #[derive(Subcommand)]
 pub enum ExpenseClaimCommands {
     /// List expense claims
+    ///
+    /// Retrieve all expense claims from Xero. Expense claims are used to
+    /// reimburse employees for out-of-pocket expenses. Results include
+    /// claim ID, user name, status, total amount, and amount due.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero expense-claims list
+  xero expense-claims list --output json
+  xero expense-claims list --compact")]
     List,
+
     /// Get a specific expense claim
-    Get { id: String },
+    ///
+    /// Fetch a single expense claim by its Xero expense claim ID. Returns
+    /// full details including the claimant, receipts, status, and amounts.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero expense-claims get a1b2c3d4-e5f6-7890-abcd-ef1234567890
+  xero expense-claims get a1b2c3d4-e5f6-7890-abcd-ef1234567890 --output json")]
+    Get {
+        /// The Xero expense claim ID (UUID)
+        id: String,
+    },
+
     /// Create an expense claim
+    ///
+    /// Create a new expense claim in Xero from a JSON file. The file must
+    /// contain a valid expense claim payload including the user, receipts,
+    /// and current status.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero expense-claims create --file claim.json
+  xero expense-claims create --file ./data/new-claim.json --output json")]
     Create {
+        /// Path to a JSON file containing the expense claim payload
         #[arg(long)]
         file: String,
     },
+
     /// Update an expense claim
+    ///
+    /// Update an existing expense claim by its ID. You can change the status
+    /// directly with --status, or provide a full update payload via --file.
+    /// Valid status values: SUBMITTED, AUTHORISED, PAID, VOIDED.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero expense-claims update a1b2c3d4-e5f6-7890-abcd-ef1234567890 --status AUTHORISED
+  xero expense-claims update a1b2c3d4-e5f6-7890-abcd-ef1234567890 --status PAID
+  xero expense-claims update a1b2c3d4-e5f6-7890-abcd-ef1234567890 --file updated-claim.json
+  xero expense-claims update a1b2c3d4-e5f6-7890-abcd-ef1234567890 --status VOIDED --output json")]
     Update {
+        /// The Xero expense claim ID (UUID)
         id: String,
+        /// New status for the claim (SUBMITTED, AUTHORISED, PAID, VOIDED)
         #[arg(long)]
         status: Option<String>,
+        /// Path to a JSON file containing the full update payload
         #[arg(long)]
         file: Option<String>,
     },
+
     /// View expense claim history
-    History { id: String },
+    ///
+    /// Retrieve the change history for a specific expense claim. Shows a
+    /// timeline of modifications including status transitions, edits, and
+    /// user actions.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero expense-claims history a1b2c3d4-e5f6-7890-abcd-ef1234567890
+  xero expense-claims history a1b2c3d4-e5f6-7890-abcd-ef1234567890 --output json")]
+    History {
+        /// The Xero expense claim ID (UUID)
+        id: String,
+    },
 }
 
 impl Tabular for ExpenseClaim {

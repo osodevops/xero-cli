@@ -8,50 +8,106 @@ use clap::Subcommand;
 #[derive(Subcommand)]
 pub enum TrackingCategoryCommands {
     /// List tracking categories
+    ///
+    /// Retrieve all tracking categories and their options for the connected
+    /// Xero organisation. Tracking categories let you tag transactions with
+    /// additional dimensions such as region, department, or project.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero tracking-categories list
+  xero tracking-categories list --output json
+  xero tracking-categories list --compact")]
     List,
+
     /// Get a specific tracking category
+    ///
+    /// Retrieve full details for a single tracking category by its UUID,
+    /// including all of its available options.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero tracking-categories get b2e5f3a1-7d4c-4e8a-9f12-3c6d8e9a0b1f
+  xero tracking-categories get b2e5f3a1-... --output json")]
     Get {
-        /// Tracking category ID
+        /// Tracking category ID (UUID)
         id: String,
     },
+
     /// Create a tracking category
+    ///
+    /// Create a new tracking category with the given name. Xero allows a
+    /// maximum of two active tracking categories at any time.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero tracking-categories create --name \"Region\"
+  xero tracking-categories create --name \"Department\" --output json")]
     Create {
-        /// Category name
+        /// Name for the new tracking category
         #[arg(long)]
         name: String,
     },
+
     /// Update a tracking category
+    ///
+    /// Rename an existing tracking category. This does not affect the
+    /// options within the category.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero tracking-categories update b2e5f3a1-... --name \"Cost Centre\"
+  xero tracking-categories update b2e5f3a1-... --name \"Business Unit\" --output json")]
     Update {
-        /// Tracking category ID
+        /// Tracking category ID (UUID) to update
         id: String,
-        /// New category name
+        /// New name for the tracking category
         #[arg(long)]
         name: String,
     },
+
     /// Add an option to a tracking category
+    ///
+    /// Add a new selectable option to an existing tracking category.
+    /// For example, add "North" and "South" options to a "Region" category.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero tracking-categories add-option b2e5f3a1-... --name \"North\"
+  xero tracking-categories add-option b2e5f3a1-... --name \"South\" --output json")]
     AddOption {
-        /// Tracking category ID
+        /// Tracking category ID (UUID) to add the option to
         id: String,
-        /// Option name
+        /// Name for the new option
         #[arg(long)]
         name: String,
     },
+
     /// Update an option in a tracking category
+    ///
+    /// Rename an existing option within a tracking category.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero tracking-categories update-option b2e5f3a1-... --option-id c4d6e8f0-... --name \"North-East\"
+  xero tracking-categories update-option b2e5f3a1-... --option-id c4d6e8f0-... --name \"APAC\" --output json")]
     UpdateOption {
-        /// Tracking category ID
+        /// Tracking category ID (UUID) containing the option
         id: String,
-        /// Option ID to update
+        /// Option ID (UUID) to update
         #[arg(long)]
         option_id: String,
-        /// New option name
+        /// New name for the option
         #[arg(long)]
         name: String,
     },
+
     /// Remove an option from a tracking category
+    ///
+    /// Delete an option from a tracking category. Existing transactions
+    /// that use this option will retain the value, but it will no longer
+    /// be selectable for new transactions.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero tracking-categories remove-option b2e5f3a1-... --option-id c4d6e8f0-...")]
     RemoveOption {
-        /// Tracking category ID
+        /// Tracking category ID (UUID) containing the option
         id: String,
-        /// Option ID to remove
+        /// Option ID (UUID) to remove
         #[arg(long)]
         option_id: String,
     },

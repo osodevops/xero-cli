@@ -8,22 +8,73 @@ use clap::Subcommand;
 #[derive(Subcommand)]
 pub enum LinkedTransactionCommands {
     /// List linked transactions
+    ///
+    /// Retrieve all linked transactions in the organisation.
+    /// Linked transactions connect billable expenses on purchase transactions
+    /// (e.g. bills) to sales invoices so costs can be passed on to customers.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero linked-transactions list
+  xero linked-transactions list --output json")]
     List,
+
     /// Get a specific linked transaction
-    Get { id: String },
-    /// Create a linked transaction
-    Create {
-        #[arg(long)]
-        file: String,
-    },
-    /// Update a linked transaction
-    Update {
+    ///
+    /// Retrieve full details for a single linked transaction by its UUID,
+    /// including the source and target transaction references.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero linked-transactions get a1b2c3d4-e5f6-7890-abcd-ef1234567890
+  xero linked-transactions get a1b2c3d4-e5f6-7890-abcd-ef1234567890 --output json")]
+    Get {
+        /// Linked transaction ID (UUID)
         id: String,
+    },
+
+    /// Create a linked transaction
+    ///
+    /// Create a new linked transaction from a JSON file.
+    /// The file must contain a valid payload specifying the source transaction,
+    /// source line item, and the target contact to bill.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero linked-transactions create --file link.json
+  xero linked-transactions create --file link.json --output json")]
+    Create {
+        /// Path to JSON file containing the linked transaction payload
         #[arg(long)]
         file: String,
     },
+
+    /// Update a linked transaction
+    ///
+    /// Update an existing linked transaction from a JSON file.
+    /// The file must contain the fields to modify, such as the target
+    /// transaction or contact assignment.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero linked-transactions update a1b2c3d4-... --file updated-link.json
+  xero linked-transactions update a1b2c3d4-... --file updated-link.json --output json")]
+    Update {
+        /// Linked transaction ID (UUID)
+        id: String,
+        /// Path to JSON file with updated linked transaction data
+        #[arg(long)]
+        file: String,
+    },
+
     /// Delete a linked transaction
-    Delete { id: String },
+    ///
+    /// Permanently delete a linked transaction by its UUID.
+    /// This removes the link between the source and target transactions
+    /// but does not affect the underlying transactions themselves.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero linked-transactions delete a1b2c3d4-e5f6-7890-abcd-ef1234567890")]
+    Delete {
+        /// Linked transaction ID (UUID)
+        id: String,
+    },
 }
 
 impl Tabular for LinkedTransaction {

@@ -7,6 +7,14 @@ use clap::Subcommand;
 #[derive(Subcommand)]
 pub enum OrganisationCommands {
     /// Get organisation details
+    ///
+    /// Retrieve full details for the connected Xero organisation, including
+    /// name, legal name, tax registration, base currency, and financial year settings.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero organisation get
+  xero organisation get --output json
+  xero organisation get --compact")]
     Get,
 }
 

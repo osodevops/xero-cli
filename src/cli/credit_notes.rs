@@ -9,39 +9,94 @@ use clap::Subcommand;
 #[derive(Subcommand)]
 pub enum CreditNoteCommands {
     /// List credit notes
+    ///
+    /// Retrieves all credit notes in your Xero organisation, optionally
+    /// filtered by status or a custom where clause. Credit notes represent
+    /// amounts owed back to a contact and can be allocated against invoices.
+    /// Results are returned in reverse chronological order.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero credit-notes list
+  xero credit-notes list --status AUTHORISED
+  xero credit-notes list --status DRAFT --output json
+  xero credit-notes list --where 'Total > 500.00'
+  xero credit-notes list --status PAID --compact")]
     List {
-        /// Filter by status
+        /// Filter by credit note status.
+        /// Valid values: DRAFT, SUBMITTED, AUTHORISED, PAID, VOIDED
         #[arg(long)]
         status: Option<String>,
-        /// Custom where clause
+        /// Xero-style where clause for advanced filtering (e.g. 'Total > 500.00')
         #[arg(long, name = "where")]
         where_clause: Option<String>,
     },
+
     /// Get a specific credit note
+    ///
+    /// Retrieves the full details of a single credit note by its unique
+    /// Xero identifier, including line items, contact information,
+    /// remaining credit, and allocation history.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero credit-notes get 249ae0af-bb1c-4b40-a88b-21e684740927
+  xero credit-notes get 249ae0af-bb1c-4b40-a88b-21e684740927 --output json")]
     Get {
-        /// Credit note ID
+        /// Credit note UUID (e.g. 249ae0af-bb1c-4b40-a88b-21e684740927)
         id: String,
     },
+
     /// Create a credit note
+    ///
+    /// Creates a new credit note from a JSON file. The file must contain
+    /// valid Xero CreditNote JSON including at minimum a Contact and at
+    /// least one LineItem. The credit note will be created in DRAFT status
+    /// unless a Status field is specified in the JSON payload.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero credit-notes create --file credit-note.json
+  xero credit-notes create --file credit-note.json --output json")]
     Create {
-        /// JSON file with credit note data
+        /// Path to a JSON file containing the credit note payload
         #[arg(long)]
         file: String,
     },
+
     /// Allocate a credit note to an invoice
+    ///
+    /// Applies an amount from an existing credit note against an outstanding
+    /// invoice. The credit note must be in AUTHORISED status and must have
+    /// sufficient remaining credit. The allocation amount cannot exceed the
+    /// remaining credit on the credit note or the amount due on the invoice.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero credit-notes allocate 249ae0af-bb1c-4b40-a88b-21e684740927 \\
+    --invoice 6b02e689-77c3-4515-a709-7e8b42889b69 \\
+    --amount 150.00
+
+  xero credit-notes allocate <CREDIT_NOTE_ID> \\
+    --invoice <INVOICE_ID> \\
+    --amount 500.00 --output json")]
     Allocate {
-        /// Credit note ID
+        /// Credit note UUID to allocate from
         id: String,
-        /// Invoice ID to allocate to
+        /// Invoice UUID to apply the credit against
         #[arg(long)]
         invoice: String,
-        /// Amount to allocate
+        /// Amount to allocate as a positive decimal (e.g. 150.00)
         #[arg(long)]
         amount: String,
     },
+
     /// View credit note history
+    ///
+    /// Retrieves the full audit history for a credit note, showing all
+    /// status changes, edits, and allocation events in chronological order.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero credit-notes history 249ae0af-bb1c-4b40-a88b-21e684740927
+  xero credit-notes history 249ae0af-bb1c-4b40-a88b-21e684740927 --output json")]
     History {
-        /// Credit note ID
+        /// Credit note UUID to retrieve history for
         id: String,
     },
 }

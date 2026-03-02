@@ -8,9 +8,28 @@ use clap::Subcommand;
 #[derive(Subcommand)]
 pub enum BrandingThemeCommands {
     /// List branding themes
+    ///
+    /// Retrieve all branding themes available in the connected Xero organisation.
+    /// Branding themes control the look and feel of invoices, quotes, and other documents.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero branding-themes list
+  xero branding-themes list --output json
+  xero branding-themes list --compact")]
     List,
+
     /// Get a specific branding theme
-    Get { id: String },
+    ///
+    /// Retrieve full details for a single branding theme by its UUID,
+    /// including its name and type.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero branding-themes get a1b2c3d4-e5f6-7890-abcd-ef1234567890
+  xero branding-themes get a1b2c3d4-e5f6-7890-abcd-ef1234567890 --output json")]
+    Get {
+        /// Branding theme ID (UUID)
+        id: String,
+    },
 }
 
 impl Tabular for BrandingTheme {

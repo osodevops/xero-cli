@@ -8,16 +8,56 @@ use clap::Subcommand;
 #[derive(Subcommand)]
 pub enum ReceiptCommands {
     /// List receipts
+    ///
+    /// Retrieve all receipts from Xero. Receipts are records of payments
+    /// that have been received, typically for reimbursable expenses.
+    /// Results include receipt number, contact, status, total, and date.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero receipts list
+  xero receipts list --output json
+  xero receipts list --compact")]
     List,
+
     /// Get a specific receipt
-    Get { id: String },
+    ///
+    /// Fetch a single receipt by its Xero receipt ID. Returns full details
+    /// including line items, contact information, and current status.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero receipts get a1b2c3d4-e5f6-7890-abcd-ef1234567890
+  xero receipts get a1b2c3d4-e5f6-7890-abcd-ef1234567890 --output json")]
+    Get {
+        /// The Xero receipt ID (UUID)
+        id: String,
+    },
+
     /// Create a receipt
+    ///
+    /// Create a new receipt in Xero from a JSON file. The file must contain
+    /// a valid receipt payload including contact, line items, and user details.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero receipts create --file receipt.json
+  xero receipts create --file ./data/new-receipt.json --output json")]
     Create {
+        /// Path to a JSON file containing the receipt payload
         #[arg(long)]
         file: String,
     },
+
     /// View receipt history
-    History { id: String },
+    ///
+    /// Retrieve the change history for a specific receipt. Shows a timeline
+    /// of modifications including status changes, edits, and user actions.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero receipts history a1b2c3d4-e5f6-7890-abcd-ef1234567890
+  xero receipts history a1b2c3d4-e5f6-7890-abcd-ef1234567890 --output json")]
+    History {
+        /// The Xero receipt ID (UUID)
+        id: String,
+    },
 }
 
 impl Tabular for Receipt {

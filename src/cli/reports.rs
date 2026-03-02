@@ -8,48 +8,141 @@ use clap::Subcommand;
 #[derive(Subcommand)]
 pub enum ReportCommands {
     /// Profit and Loss report
+    ///
+    /// Generates a Profit and Loss (income statement) report for the specified
+    /// date range. If no dates are provided, Xero returns the current financial
+    /// year to date. Rows are grouped by income and expense categories.
+    #[command(after_long_help = "\
+EXAMPLES:
+  # Current financial year to date
+  xero reports profit-and-loss
+
+  # Specific quarter
+  xero reports profit-and-loss --from 2025-01-01 --to 2025-03-31
+
+  # Output as JSON
+  xero reports profit-and-loss --from 2025-01-01 --to 2025-12-31 -o json")]
     ProfitAndLoss {
-        /// From date (YYYY-MM-DD)
+        /// Start date for the reporting period (YYYY-MM-DD)
         #[arg(long)]
         from: Option<String>,
-        /// To date (YYYY-MM-DD)
+        /// End date for the reporting period (YYYY-MM-DD)
         #[arg(long)]
         to: Option<String>,
     },
     /// Balance Sheet report
+    ///
+    /// Generates a Balance Sheet report showing assets, liabilities, and equity
+    /// as at the specified date. Defaults to today when no date is given.
+    #[command(after_long_help = "\
+EXAMPLES:
+  # Balance sheet as at today
+  xero reports balance-sheet
+
+  # Balance sheet at end of last quarter
+  xero reports balance-sheet --date 2025-03-31
+
+  # Output as JSON
+  xero reports balance-sheet --date 2025-03-31 -o json")]
     BalanceSheet {
-        /// Report date (YYYY-MM-DD)
+        /// Report as-at date (YYYY-MM-DD); defaults to today
         #[arg(long)]
         date: Option<String>,
     },
     /// Trial Balance report
+    ///
+    /// Generates a Trial Balance report listing all accounts with their debit
+    /// and credit balances as at the specified date. Useful for verifying that
+    /// total debits equal total credits.
+    #[command(after_long_help = "\
+EXAMPLES:
+  # Trial balance as at today
+  xero reports trial-balance
+
+  # Trial balance at a specific date
+  xero reports trial-balance --date 2025-06-30")]
     TrialBalance {
-        /// Report date (YYYY-MM-DD)
+        /// Report as-at date (YYYY-MM-DD); defaults to today
         #[arg(long)]
         date: Option<String>,
     },
     /// Bank Summary report
+    ///
+    /// Retrieves a summary of all bank accounts showing opening balance,
+    /// cash received, cash spent, and closing balance. Covers the current
+    /// statement period configured in Xero.
+    #[command(after_long_help = "\
+EXAMPLES:
+  # Bank summary for the current period
+  xero reports bank-summary
+
+  # Output as JSON for scripting
+  xero reports bank-summary -o json")]
     BankSummary,
     /// Budget Summary report
+    ///
+    /// Generates a Budget Summary report comparing actual figures against
+    /// budgeted amounts for the specified date range. If no dates are provided,
+    /// Xero returns the current financial year.
+    #[command(after_long_help = "\
+EXAMPLES:
+  # Budget summary for current financial year
+  xero reports budget-summary
+
+  # Budget summary for a specific period
+  xero reports budget-summary --from 2025-01-01 --to 2025-06-30")]
     BudgetSummary {
-        /// From date
+        /// Start date for the budget period (YYYY-MM-DD)
         #[arg(long)]
         from: Option<String>,
-        /// To date
+        /// End date for the budget period (YYYY-MM-DD)
         #[arg(long)]
         to: Option<String>,
     },
     /// Executive Summary report
+    ///
+    /// Retrieves a high-level executive summary with key financial metrics
+    /// including cash position, income, expenses, debtors, and creditors.
+    /// No parameters are required.
+    #[command(after_long_help = "\
+EXAMPLES:
+  # Executive summary
+  xero reports executive-summary
+
+  # Output as JSON
+  xero reports executive-summary -o json")]
     ExecutiveSummary,
     /// Aged Receivables by Contact
+    ///
+    /// Generates an Aged Receivables report for a single contact, showing
+    /// outstanding invoices grouped into aging buckets (current, 30, 60, 90+
+    /// days). Useful for chasing overdue payments.
+    #[command(after_long_help = "\
+EXAMPLES:
+  # Aged receivables for a specific contact
+  xero reports aged-receivables --contact 00000000-0000-0000-0000-000000000000
+
+  # Output as JSON
+  xero reports aged-receivables --contact <CONTACT_ID> -o json")]
     AgedReceivables {
-        /// Contact ID
+        /// Xero contact UUID to generate the report for
         #[arg(long)]
         contact: String,
     },
     /// Aged Payables by Contact
+    ///
+    /// Generates an Aged Payables report for a single contact, showing
+    /// outstanding bills grouped into aging buckets (current, 30, 60, 90+
+    /// days). Helps track what you owe to suppliers.
+    #[command(after_long_help = "\
+EXAMPLES:
+  # Aged payables for a specific contact
+  xero reports aged-payables --contact 00000000-0000-0000-0000-000000000000
+
+  # Output as JSON
+  xero reports aged-payables --contact <CONTACT_ID> -o json")]
     AgedPayables {
-        /// Contact ID
+        /// Xero contact UUID to generate the report for
         #[arg(long)]
         contact: String,
     },

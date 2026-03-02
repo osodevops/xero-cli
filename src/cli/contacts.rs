@@ -8,48 +8,84 @@ use clap::Subcommand;
 #[derive(Subcommand)]
 pub enum ContactCommands {
     /// List contacts
+    ///
+    /// Retrieve contacts with optional name search, custom filters, and ordering.
+    /// Results are paginated — use --all-pages to fetch all.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero contacts list
+  xero contacts list --search \"Acme\"
+  xero contacts list --where 'IsCustomer==true' --order \"Name ASC\"
+  xero contacts list --output json --all-pages")]
     List {
-        /// Search by name
+        /// Search contacts by name (partial match)
         #[arg(long)]
         search: Option<String>,
-        /// Custom where clause
+        /// Custom Xero where clause filter expression
+        ///
+        /// Example: --where 'IsCustomer==true&&IsSupplier==false'
         #[arg(long, name = "where")]
         where_clause: Option<String>,
-        /// Order by
+        /// Order by field and direction (e.g. "Name ASC", "UpdatedDateUTC DESC")
         #[arg(long)]
         order: Option<String>,
     },
+
     /// Get a specific contact
+    ///
+    /// Retrieve full details for a single contact by its UUID.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero contacts get 9b9ba9e5-9234-4b93-b899-22acb47f9b5e
+  xero contacts get 9b9ba9e5-... --output json")]
     Get {
-        /// Contact ID
+        /// Contact ID (UUID)
         id: String,
     },
+
     /// Create a contact
+    ///
+    /// Create a new contact either inline with flags or from a JSON file.
+    /// For complex contact data (addresses, phones), use --file with a JSON payload.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero contacts create --name \"Acme Corp\"
+  xero contacts create --name \"Acme Corp\" --email \"info@acme.com\"
+  xero contacts create --file contact.json")]
     Create {
-        /// Contact name
+        /// Contact name (required unless using --file)
         #[arg(long)]
         name: String,
         /// Email address
         #[arg(long)]
         email: Option<String>,
-        /// Tax number
+        /// Tax number (ABN, GST number, etc.)
         #[arg(long)]
         tax_number: Option<String>,
-        /// JSON file with contact data
+        /// Path to JSON file with full contact data
         #[arg(long)]
         file: Option<String>,
     },
+
     /// Update a contact
+    ///
+    /// Update an existing contact's name, email, or other fields.
+    /// Provide individual flags or a JSON file with the update payload.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero contacts update 9b9ba9e5-... --name \"Acme Corporation\"
+  xero contacts update 9b9ba9e5-... --email \"new@acme.com\"
+  xero contacts update 9b9ba9e5-... --file updates.json")]
     Update {
-        /// Contact ID
+        /// Contact ID (UUID)
         id: String,
-        /// New name
+        /// New contact name
         #[arg(long)]
         name: Option<String>,
-        /// New email
+        /// New email address
         #[arg(long)]
         email: Option<String>,
-        /// JSON file with update data
+        /// Path to JSON file with update data
         #[arg(long)]
         file: Option<String>,
     },

@@ -8,6 +8,14 @@ use clap::Subcommand;
 #[derive(Subcommand)]
 pub enum CurrencyCommands {
     /// List currencies
+    ///
+    /// Retrieve all currencies that have been set up for the organisation.
+    /// Each currency includes its ISO 4217 code and description.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero currencies list
+  xero currencies list --output json
+  xero currencies list --compact")]
     List,
 }
 

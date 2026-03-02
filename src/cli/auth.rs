@@ -6,30 +6,70 @@ use clap::Subcommand;
 #[derive(Subcommand)]
 pub enum AuthCommands {
     /// Interactive PKCE login
+    ///
+    /// Opens a browser for the OAuth2 Authorization Code + PKCE flow.
+    /// A local HTTP server listens on the callback port to receive the auth code.
+    /// Tokens are stored securely in the OS keychain.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero auth login
+  xero auth login --port 9090
+  xero auth login --scopes \"openid,accounting.transactions.read\"")]
     Login {
-        /// Custom callback port
+        /// Custom callback port for the local HTTP server
         #[arg(long, default_value = "8080")]
         port: u16,
-        /// Comma-separated scopes
+        /// Comma-separated OAuth scopes (overrides config file scopes)
+        ///
+        /// Common scopes: openid, profile, email, accounting.transactions,
+        /// accounting.transactions.read, accounting.contacts,
+        /// accounting.contacts.read, accounting.settings,
+        /// accounting.settings.read, accounting.reports.read,
+        /// accounting.journals.read, accounting.budgets.read
         #[arg(long)]
         scopes: Option<String>,
     },
+
     /// Show current auth status
+    ///
+    /// Displays whether authentication is active or expired, the tenant ID,
+    /// token expiry time, time remaining, and configured scopes.
     Status,
+
     /// Force token refresh
+    ///
+    /// Uses the stored refresh token to obtain a new access token.
+    /// Useful when the access token has expired but the refresh token is still valid.
     Refresh,
+
     /// Clear stored tokens
+    ///
+    /// Removes all stored OAuth tokens from the OS keychain.
+    /// You will need to run `xero auth login` again after logging out.
     Logout,
+
     /// Configure client credentials (M2M)
+    ///
+    /// Set up machine-to-machine authentication using client credentials flow.
+    /// This is used for server-to-server integrations without user interaction.
+    /// Requires a Xero app configured with the "Client Credentials" grant type.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero auth setup-m2m --client-id YOUR_ID --client-secret YOUR_SECRET")]
     SetupM2m {
-        /// Client ID
+        /// OAuth2 client ID from your Xero app
         #[arg(long, env = "XERO_CLIENT_ID")]
         client_id: String,
-        /// Client Secret
+        /// OAuth2 client secret from your Xero app
         #[arg(long, env = "XERO_CLIENT_SECRET")]
         client_secret: String,
     },
+
     /// Manage OAuth scopes
+    ///
+    /// View, add, or apply preset scope configurations.
+    /// Without a subcommand, lists currently configured scopes.
+    /// Changes take effect after re-authenticating with `xero auth login`.
     Scopes {
         #[command(subcommand)]
         command: Option<ScopeCommands>,
@@ -39,11 +79,26 @@ pub enum AuthCommands {
 #[derive(Subcommand)]
 pub enum ScopeCommands {
     /// Add a scope
+    ///
+    /// Adds a single OAuth scope to the configuration.
+    /// Re-authenticate with `xero auth login` for the change to take effect.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero auth scopes add accounting.transactions.read
+  xero auth scopes add accounting.contacts")]
     Add {
-        /// Scope to add
+        /// OAuth scope to add (e.g. accounting.transactions.read)
         scope: String,
     },
+
     /// Apply a scope preset
+    ///
+    /// Replaces all configured scopes with a predefined set.
+    /// Available presets: read-only, bookkeeper, full-access, reports-only.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero auth scopes preset read-only
+  xero auth scopes preset full-access")]
     Preset {
         /// Preset name: read-only, bookkeeper, full-access, reports-only
         name: String,

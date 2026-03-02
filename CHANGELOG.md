@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.4.0] - 2026-03-02
+
+### Added
+- Rich `--help` text for all 34 commands and every subcommand with detailed descriptions, valid parameter values, and concrete usage examples
+- Man page generation via `xero completions man --output-dir <dir>` producing 164 individual man pages
+- Getting Started guide, Environment Variables reference, and Examples section in top-level `--help`
+- OAuth scope requirements documented for every command group
+
+### Fixed
+- Shell completions now cover all 34 commands (previously only 7 were included)
+
+### Changed
+- Moved `Cli` struct to library crate for reuse by completions and man page generation
+- Completions use the real derive-based command tree instead of a manually maintained duplicate
+
 ## [0.3.0] - 2026-03-02
 
 ### Added

@@ -8,22 +8,70 @@ use clap::Subcommand;
 #[derive(Subcommand)]
 pub enum ContactGroupCommands {
     /// List contact groups
+    ///
+    /// Retrieve all contact groups defined in the organisation.
+    /// Contact groups allow you to organise contacts into categories
+    /// for reporting or bulk operations.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero contact-groups list
+  xero contact-groups list --output json")]
     List,
+
     /// Get a specific contact group
-    Get { id: String },
+    ///
+    /// Retrieve full details for a single contact group by its UUID,
+    /// including the contacts that belong to it.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero contact-groups get a1b2c3d4-e5f6-7890-abcd-ef1234567890
+  xero contact-groups get a1b2c3d4-e5f6-7890-abcd-ef1234567890 --output json")]
+    Get {
+        /// Contact group ID (UUID)
+        id: String,
+    },
+
     /// Create a contact group
+    ///
+    /// Create a new contact group with the given name.
+    /// Group names must be unique within the organisation.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero contact-groups create --name \"Key Clients\"
+  xero contact-groups create --name \"Suppliers - APAC\"")]
     Create {
+        /// Name for the new contact group (must be unique)
         #[arg(long)]
         name: String,
     },
+
     /// Update a contact group
+    ///
+    /// Update the name of an existing contact group.
+    /// Only the name field can be modified via this command.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero contact-groups update a1b2c3d4-... --name \"VIP Clients\"
+  xero contact-groups update a1b2c3d4-... --name \"Suppliers - Europe\"")]
     Update {
+        /// Contact group ID (UUID)
         id: String,
+        /// New name for the contact group
         #[arg(long)]
         name: Option<String>,
     },
+
     /// Delete a contact group
-    Delete { id: String },
+    ///
+    /// Permanently delete a contact group by its UUID.
+    /// This removes the group but does not delete the contacts within it.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero contact-groups delete a1b2c3d4-e5f6-7890-abcd-ef1234567890")]
+    Delete {
+        /// Contact group ID (UUID)
+        id: String,
+    },
 }
 
 impl Tabular for ContactGroup {

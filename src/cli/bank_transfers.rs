@@ -8,21 +8,56 @@ use clap::Subcommand;
 #[derive(Subcommand)]
 pub enum BankTransferCommands {
     /// List bank transfers
+    ///
+    /// Retrieves all bank transfers recorded in your Xero organisation.
+    /// Each transfer represents a movement of funds between two bank accounts.
+    /// Results are returned in reverse chronological order.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero bank-transfers list
+  xero bank-transfers list --output json
+  xero bank-transfers list --compact")]
     List,
+
     /// Get a specific bank transfer
+    ///
+    /// Retrieves the full details of a single bank transfer by its unique
+    /// Xero identifier, including the source and destination bank accounts,
+    /// the transfer amount, and the date.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero bank-transfers get 297c2dc5-cc47-4afd-8ec8-74990b8761e9
+  xero bank-transfers get 297c2dc5-cc47-4afd-8ec8-74990b8761e9 --output json")]
     Get {
-        /// Bank transfer ID
+        /// Bank transfer UUID (e.g. 297c2dc5-cc47-4afd-8ec8-74990b8761e9)
         id: String,
     },
+
     /// Create a bank transfer
+    ///
+    /// Creates a new bank transfer between two bank accounts in your Xero
+    /// organisation. Both account IDs must refer to existing bank accounts,
+    /// and the source account must have sufficient funds for the transfer.
+    /// The amount must be a positive decimal value.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero bank-transfers create \\
+    --from-account 297c2dc5-cc47-4afd-8ec8-74990b8761e9 \\
+    --to-account 5baa2e4c-3c05-4089-a657-c6a76a tried07 \\
+    --amount 250.00
+
+  xero bank-transfers create \\
+    --from-account <SAVINGS_ACCOUNT_ID> \\
+    --to-account <CHEQUE_ACCOUNT_ID> \\
+    --amount 1000.00 --output json")]
     Create {
-        /// Source bank account ID
+        /// Source bank account UUID to transfer funds from
         #[arg(long)]
         from_account: String,
-        /// Destination bank account ID
+        /// Destination bank account UUID to transfer funds to
         #[arg(long)]
         to_account: String,
-        /// Transfer amount
+        /// Transfer amount as a positive decimal (e.g. 250.00)
         #[arg(long)]
         amount: String,
     },

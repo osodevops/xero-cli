@@ -8,9 +8,28 @@ use clap::Subcommand;
 #[derive(Subcommand)]
 pub enum RepeatingInvoiceCommands {
     /// List repeating invoices
+    ///
+    /// Retrieve all repeating invoice templates in the connected Xero organisation.
+    /// Shows the invoice type, contact, status, and total for each template.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero repeating-invoices list
+  xero repeating-invoices list --output json
+  xero repeating-invoices list --compact")]
     List,
+
     /// Get a specific repeating invoice
-    Get { id: String },
+    ///
+    /// Retrieve full details for a single repeating invoice template by its UUID,
+    /// including schedule, line items, and contact information.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero repeating-invoices get 8b2e4f6a-3c1d-5e7f-9a0b-c2d4e6f8a1b3
+  xero repeating-invoices get 8b2e4f6a-3c1d-5e7f-9a0b-c2d4e6f8a1b3 --output json")]
+    Get {
+        /// Repeating invoice ID (UUID)
+        id: String,
+    },
 }
 
 impl Tabular for RepeatingInvoice {

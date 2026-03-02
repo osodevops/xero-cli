@@ -4,15 +4,56 @@ use clap::Subcommand;
 
 #[derive(Subcommand)]
 pub enum ConfigCommands {
-    /// Initialize configuration file
+    /// Initialize configuration file.
+    ///
+    /// Creates a new configuration file with sensible defaults at the default
+    /// location (~/.config/xero-cli/config.toml) or at the path specified by
+    /// the `--config` global option. If the file already exists, the command
+    /// exits without overwriting it.
+    #[command(after_long_help = r#"EXAMPLES:
+  # Create a default config file
+  xero config init
+
+  # Create a config file at a custom path
+  xero --config ./my-config.toml config init"#)]
     Init,
-    /// Show current configuration
+
+    /// Show current configuration.
+    ///
+    /// Prints the fully resolved configuration as TOML to stdout. This includes
+    /// values loaded from the config file as well as any defaults applied by the
+    /// application. Useful for verifying that your settings are correct before
+    /// making API calls.
+    #[command(after_long_help = r#"EXAMPLES:
+  # Display the current configuration
+  xero config show
+
+  # Display configuration from a specific file
+  xero --config ./my-config.toml config show"#)]
     Show,
-    /// Set a configuration value
+
+    /// Set a configuration value.
+    ///
+    /// Updates a single key in the configuration file using dotted notation
+    /// (section.field). The config file is created if it does not already exist.
+    /// Changes are written immediately and take effect on the next command
+    /// invocation.
+    #[command(after_long_help = r#"EXAMPLES:
+  # Set the OAuth2 client ID
+  xero config set auth.client_id YOUR_CLIENT_ID
+
+  # Set the default output format to JSON
+  xero config set default.output_format json
+
+  # Set the tenant ID for multi-org setups
+  xero config set auth.tenant_id YOUR_TENANT_ID"#)]
     Set {
-        /// Config key (e.g. "auth.client_id", "default.output_format")
+        /// Config key in dotted notation (e.g. "auth.client_id", "default.output_format").
+        ///
+        /// The key must contain exactly one dot separating the TOML section name
+        /// from the field name.
         key: String,
-        /// Config value
+        /// The value to assign to the key.
         value: String,
     },
 }

@@ -10,3 +10,5 @@ pub mod error;
 pub mod models;
 pub mod output;
 pub mod rate_limit;
+
+pub const VERSION: &str = concat!(env!("CARGO_PKG_VERSION"), " (", env!("XERO_GIT_HASH"), ")");

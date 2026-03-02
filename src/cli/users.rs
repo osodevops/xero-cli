@@ -8,9 +8,28 @@ use clap::Subcommand;
 #[derive(Subcommand)]
 pub enum UserCommands {
     /// List users
+    ///
+    /// Retrieve all users who have access to the connected Xero organisation.
+    /// Each user includes their email address, name, and organisation role.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero users list
+  xero users list --output json
+  xero users list --compact")]
     List,
+
     /// Get a specific user
-    Get { id: String },
+    ///
+    /// Retrieve full details for a single user by their UUID,
+    /// including email, name, and assigned organisation role.
+    #[command(after_long_help = "\
+EXAMPLES:
+  xero users get f7c8d9e0-1234-5678-9abc-def012345678
+  xero users get f7c8d9e0-1234-5678-9abc-def012345678 --output json")]
+    Get {
+        /// User ID (UUID)
+        id: String,
+    },
 }
 
 impl Tabular for User {
