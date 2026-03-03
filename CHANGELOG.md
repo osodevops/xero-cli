@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1] - 2026-03-03
+
+### Fixed
+
+- Fix release pipeline: auto-tag uses PAT, correct Homebrew formula URLs, Scoop support
+
+
 ## [0.4.0] - 2026-03-02
 
 ### Added
