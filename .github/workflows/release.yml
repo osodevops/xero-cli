@@ -13,10 +13,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: taiki-e/create-gh-release-action@v1
-        with:
-          changelog: CHANGELOG.md
-          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract changelog
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk "/^## \\[${VERSION}\\]/{found=1; next} /^## \\[/{if(found) exit} found{print}" CHANGELOG.md > release_notes.md
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file release_notes.md
 
   upload-assets:
     needs: create-release
@@ -32,28 +41,109 @@ jobs:
           - target: x86_64-pc-windows-msvc
             os: windows-latest
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
       - uses: Swatinem/rust-cache@v2
-      - uses: taiki-e/upload-rust-binary-action@v1
-        with:
-          bin: xero
-          target: ${{ matrix.target }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Package (unix)
+        if: runner.os != 'Windows'
+        run: |
+          cd target/${{ matrix.target }}/release
+          tar czf ../../../xero-${{ matrix.target }}.tar.gz xero
+
+      - name: Package (windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          cd target/${{ matrix.target }}/release
+          7z a ../../../xero-${{ matrix.target }}.zip xero.exe
+
+      - name: Upload assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "$GITHUB_REF_NAME" xero-${{ matrix.target }}.* --clobber
 
   homebrew:
     needs: upload-assets
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
       - name: Update Homebrew tap
-        uses: mislav/bump-homebrew-formula-action@v3
-        with:
-          formula-name: xero-cli
-          homebrew-tap: osodevops/homebrew-tap
-          tag-name: ${{ github.ref_name }}
         env:
-          COMMITTER_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          BASE_URL="https://github.com/osodevops/xero-cli/releases/download/${GITHUB_REF_NAME}"
+
+          curl -fsSL "${BASE_URL}/xero-aarch64-apple-darwin.tar.gz" -o arm64.tar.gz
+          curl -fsSL "${BASE_URL}/xero-x86_64-apple-darwin.tar.gz" -o x86_64_mac.tar.gz
+          curl -fsSL "${BASE_URL}/xero-x86_64-unknown-linux-gnu.tar.gz" -o x86_64_linux.tar.gz
+
+          SHA_ARM64=$(sha256sum arm64.tar.gz | awk '{print $1}')
+          SHA_X86_64_MAC=$(sha256sum x86_64_mac.tar.gz | awk '{print $1}')
+          SHA_X86_64_LINUX=$(sha256sum x86_64_linux.tar.gz | awk '{print $1}')
+
+          cat > xero-cli.rb <<FORMULA
+          class XeroCli < Formula
+            desc "A fast, intelligent command-line interface for the Xero Accounting API"
+            homepage "https://github.com/osodevops/xero-cli"
+            version "${VERSION}"
+            license "MIT"
+
+            on_macos do
+              if Hardware::CPU.arm?
+                url "${BASE_URL}/xero-aarch64-apple-darwin.tar.gz"
+                sha256 "${SHA_ARM64}"
+              else
+                url "${BASE_URL}/xero-x86_64-apple-darwin.tar.gz"
+                sha256 "${SHA_X86_64_MAC}"
+              end
+            end
+
+            on_linux do
+              url "${BASE_URL}/xero-x86_64-unknown-linux-gnu.tar.gz"
+              sha256 "${SHA_X86_64_LINUX}"
+            end
+
+            def install
+              bin.install "xero"
+            end
+
+            test do
+              assert_match "xero", shell_output("#{bin}/xero --version")
+            end
+          end
+          FORMULA
+
+          sed -i 's/^          //' xero-cli.rb
+
+          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/osodevops/homebrew-tap.git" tap
+          cp xero-cli.rb tap/Formula/xero-cli.rb
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/xero-cli.rb
+          git commit -m "xero-cli ${VERSION}"
+          git push
+
+  scoop:
+    needs: upload-assets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Scoop bucket update
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.SCOOP_BUCKET_TOKEN }}
+          repository: osodevops/scoop-bucket
+          event-type: update-xero-manifest
+          client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}", "tag": "${{ github.ref_name }}"}'
