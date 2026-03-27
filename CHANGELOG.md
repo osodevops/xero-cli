@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.0] - 2026-03-27
+
+### Changed
+- Migrate OAuth scopes from deprecated broad scopes to Xero's new granular scopes (required for apps created after March 2, 2026)
+- Replace `accounting.transactions.read` with `accounting.invoices.read`, `accounting.payments.read`, `accounting.banktransactions.read`
+- Replace `accounting.reports.read` with `accounting.reports.profitandloss.read`, `accounting.reports.balancesheet.read`
+- Update all four scope presets (read-only, bookkeeper, full-access, reports-only) with granular scopes
+- Update help text and doc comments with correct granular scope names
+
+### Fixed
+- Fix `unauthorized_client` error when authenticating with Xero apps created after March 2, 2026
+- Fix `invalid_client` error during token exchange by adding `XERO_CLIENT_SECRET` support for Web app (confidential client) PKCE flow
+- Fix invalid scope name `accounting.reports.balancesheets.read` (plural) to `accounting.reports.balancesheet.read` (singular)
+
 ## [0.4.1] - 2026-03-03
 
 ### Fixed

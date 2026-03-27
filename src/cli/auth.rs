@@ -14,18 +14,21 @@ pub enum AuthCommands {
 EXAMPLES:
   xero auth login
   xero auth login --port 9090
-  xero auth login --scopes \"openid,accounting.transactions.read\"")]
+  xero auth login --scopes \"openid,accounting.invoices.read\"")]
     Login {
         /// Custom callback port for the local HTTP server
         #[arg(long, default_value = "8080")]
         port: u16,
         /// Comma-separated OAuth scopes (overrides config file scopes)
         ///
-        /// Common scopes: openid, profile, email, accounting.transactions,
-        /// accounting.transactions.read, accounting.contacts,
-        /// accounting.contacts.read, accounting.settings,
-        /// accounting.settings.read, accounting.reports.read,
-        /// accounting.journals.read, accounting.budgets.read
+        /// Common scopes: openid, profile, email, accounting.invoices,
+        /// accounting.invoices.read, accounting.payments,
+        /// accounting.payments.read, accounting.banktransactions.read,
+        /// accounting.contacts, accounting.contacts.read,
+        /// accounting.settings, accounting.settings.read,
+        /// accounting.reports.profitandloss.read,
+        /// accounting.reports.balancesheet.read,
+        /// accounting.budgets.read
         #[arg(long)]
         scopes: Option<String>,
     },
@@ -84,10 +87,10 @@ pub enum ScopeCommands {
     /// Re-authenticate with `xero auth login` for the change to take effect.
     #[command(after_long_help = "\
 EXAMPLES:
-  xero auth scopes add accounting.transactions.read
+  xero auth scopes add accounting.invoices.read
   xero auth scopes add accounting.contacts")]
     Add {
-        /// OAuth scope to add (e.g. accounting.transactions.read)
+        /// OAuth scope to add (e.g. accounting.invoices.read)
         scope: String,
     },
 
@@ -126,13 +129,16 @@ pub async fn execute(command: AuthCommands, global: &GlobalArgs) -> miette::Resu
                     )
                 })?;
 
+            let client_secret = std::env::var("XERO_CLIENT_SECRET").ok();
+
             let scope_list: Vec<String> = scopes
                 .map(|s| s.split(',').map(|s| s.trim().to_string()).collect())
                 .unwrap_or(config.config_file.auth.scopes.clone());
 
-            let tokens = crate::auth::pkce::login(&client_id, &scope_list, port)
-                .await
-                .map_err(|e| miette::miette!("{e}"))?;
+            let tokens =
+                crate::auth::pkce::login(&client_id, client_secret.as_deref(), &scope_list, port)
+                    .await
+                    .map_err(|e| miette::miette!("{e}"))?;
 
             store.save(&tokens).map_err(|e| miette::miette!("{e}"))?;
 

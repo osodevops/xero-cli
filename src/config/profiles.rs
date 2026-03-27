@@ -12,24 +12,37 @@ pub struct Profile {
 pub const SCOPE_PRESET_READ_ONLY: &[&str] = &[
     "openid",
     "offline_access",
-    "accounting.transactions.read",
+    "accounting.invoices.read",
+    "accounting.payments.read",
+    "accounting.banktransactions.read",
+    "accounting.manualjournals.read",
     "accounting.contacts.read",
     "accounting.settings.read",
-    "accounting.reports.read",
-    "accounting.journals.read",
+    "accounting.reports.profitandloss.read",
+    "accounting.reports.balancesheet.read",
+    "accounting.reports.aged.read",
+    "accounting.reports.banksummary.read",
+    "accounting.reports.trialbalance.read",
     "accounting.attachments.read",
 ];
 
 pub const SCOPE_PRESET_BOOKKEEPER: &[&str] = &[
     "openid",
     "offline_access",
-    "accounting.transactions.read",
-    "accounting.transactions",
+    "accounting.invoices.read",
+    "accounting.invoices",
+    "accounting.payments.read",
+    "accounting.payments",
+    "accounting.banktransactions.read",
+    "accounting.banktransactions",
+    "accounting.manualjournals.read",
+    "accounting.manualjournals",
     "accounting.contacts.read",
     "accounting.contacts",
     "accounting.settings.read",
-    "accounting.reports.read",
-    "accounting.journals.read",
+    "accounting.reports.profitandloss.read",
+    "accounting.reports.balancesheet.read",
+    "accounting.reports.aged.read",
     "accounting.attachments.read",
     "accounting.attachments",
 ];
@@ -37,22 +50,42 @@ pub const SCOPE_PRESET_BOOKKEEPER: &[&str] = &[
 pub const SCOPE_PRESET_FULL_ACCESS: &[&str] = &[
     "openid",
     "offline_access",
-    "accounting.transactions",
-    "accounting.transactions.read",
+    "accounting.invoices",
+    "accounting.invoices.read",
+    "accounting.payments",
+    "accounting.payments.read",
+    "accounting.banktransactions",
+    "accounting.banktransactions.read",
+    "accounting.manualjournals",
+    "accounting.manualjournals.read",
+    "accounting.classicexpenses",
+    "accounting.classicexpenses.read",
     "accounting.contacts",
     "accounting.contacts.read",
     "accounting.settings",
     "accounting.settings.read",
-    "accounting.reports.read",
-    "accounting.journals.read",
+    "accounting.reports.profitandloss.read",
+    "accounting.reports.balancesheet.read",
+    "accounting.reports.aged.read",
+    "accounting.reports.banksummary.read",
+    "accounting.reports.trialbalance.read",
+    "accounting.reports.executivesummary.read",
+    "accounting.reports.taxreports.read",
     "accounting.attachments",
     "accounting.attachments.read",
+    "accounting.budgets.read",
 ];
 
 pub const SCOPE_PRESET_REPORTS_ONLY: &[&str] = &[
     "openid",
     "offline_access",
-    "accounting.reports.read",
+    "accounting.reports.profitandloss.read",
+    "accounting.reports.balancesheet.read",
+    "accounting.reports.aged.read",
+    "accounting.reports.banksummary.read",
+    "accounting.reports.trialbalance.read",
+    "accounting.reports.executivesummary.read",
+    "accounting.reports.taxreports.read",
     "accounting.settings.read",
 ];
 
@@ -108,7 +141,7 @@ mod tests {
     #[test]
     fn bookkeeper_includes_write_scopes() {
         let scopes = scope_preset("bookkeeper").unwrap();
-        assert!(scopes.contains(&"accounting.transactions".to_string()));
+        assert!(scopes.contains(&"accounting.invoices".to_string()));
         assert!(scopes.contains(&"accounting.contacts".to_string()));
     }
 

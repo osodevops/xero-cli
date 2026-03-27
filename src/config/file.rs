@@ -120,10 +120,13 @@ fn default_scopes() -> Vec<String> {
     vec![
         "openid".to_string(),
         "offline_access".to_string(),
-        "accounting.transactions.read".to_string(),
+        "accounting.invoices.read".to_string(),
+        "accounting.payments.read".to_string(),
+        "accounting.banktransactions.read".to_string(),
         "accounting.contacts.read".to_string(),
         "accounting.settings.read".to_string(),
-        "accounting.reports.read".to_string(),
+        "accounting.reports.profitandloss.read".to_string(),
+        "accounting.reports.balancesheet.read".to_string(),
     ]
 }
 fn default_cache_enabled() -> bool {
@@ -191,7 +194,7 @@ max_concurrent = 3
 [profiles.production]
 tenant_id = "tenant-123"
 org_name = "My Company"
-scopes = ["openid", "offline_access", "accounting.transactions"]
+scopes = ["openid", "offline_access", "accounting.invoices"]
 "#;
         let config: ConfigFile = toml::from_str(toml_str).unwrap();
         assert_eq!(config.default.active_profile.as_deref(), Some("production"));

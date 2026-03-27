@@ -2,17 +2,22 @@ use crate::auth::{Tenant, TokenSet};
 use crate::error::{Result, XeroCliError};
 use oauth2::basic::BasicClient;
 use oauth2::{
-    AuthUrl, AuthorizationCode, ClientId, CsrfToken, PkceCodeChallenge, RedirectUrl, TokenResponse,
-    TokenUrl,
+    AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, PkceCodeChallenge, RedirectUrl,
+    TokenResponse, TokenUrl,
 };
 const AUTH_URL: &str = "https://login.xero.com/identity/connect/authorize";
 const TOKEN_URL: &str = "https://identity.xero.com/connect/token";
 const CONNECTIONS_URL: &str = "https://api.xero.com/connections";
 
-pub async fn login(client_id: &str, scopes: &[String], callback_port: u16) -> Result<TokenSet> {
+pub async fn login(
+    client_id: &str,
+    client_secret: Option<&str>,
+    scopes: &[String],
+    callback_port: u16,
+) -> Result<TokenSet> {
     let redirect_url = format!("http://localhost:{callback_port}/callback");
 
-    let oauth_client = BasicClient::new(ClientId::new(client_id.to_string()))
+    let mut oauth_client = BasicClient::new(ClientId::new(client_id.to_string()))
         .set_auth_uri(
             AuthUrl::new(AUTH_URL.to_string()).map_err(|e| XeroCliError::auth(e.to_string()))?,
         )
@@ -23,6 +28,10 @@ pub async fn login(client_id: &str, scopes: &[String], callback_port: u16) -> Re
             RedirectUrl::new(redirect_url.clone())
                 .map_err(|e| XeroCliError::auth(e.to_string()))?,
         );
+
+    if let Some(secret) = client_secret {
+        oauth_client = oauth_client.set_client_secret(ClientSecret::new(secret.to_string()));
+    }
 
     let (pkce_challenge, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
 

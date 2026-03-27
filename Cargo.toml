@@ -1,6 +1,6 @@
 [package]
 name = "xero-cli"
-version = "0.4.1"
+version = "0.5.0"
 edition = "2021"
 description = "A fast, intelligent command-line interface for the Xero Accounting API"
 license = "MIT"

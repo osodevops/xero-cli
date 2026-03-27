@@ -239,7 +239,7 @@ The primary auth method for interactive CLI use. Xero supports PKCE which is ide
 xero auth login
 
 # With specific scopes
-xero auth login --scopes "accounting.transactions,accounting.contacts.read"
+xero auth login --scopes "accounting.invoices.read,accounting.contacts.read"
 
 # Check current auth status
 xero auth status
@@ -299,10 +299,10 @@ xero auth scopes preset bookkeeper
 
 | Preset | Scopes |
 |---|---|
-| `read-only` | `openid`, `offline_access`, `accounting.transactions.read`, `accounting.contacts.read`, `accounting.settings.read`, `accounting.reports.read`, `accounting.journals.read`, `accounting.attachments.read` |
-| `bookkeeper` | read-only + `accounting.transactions`, `accounting.contacts`, `accounting.attachments` |
-| `full-access` | All available accounting scopes |
-| `reports-only` | `openid`, `offline_access`, `accounting.reports.read`, `accounting.settings.read` |
+| `read-only` | `openid`, `offline_access`, `accounting.invoices.read`, `accounting.payments.read`, `accounting.banktransactions.read`, `accounting.manualjournals.read`, `accounting.contacts.read`, `accounting.settings.read`, `accounting.reports.profitandloss.read`, `accounting.reports.balancesheet.read`, `accounting.reports.aged.read`, `accounting.reports.banksummary.read`, `accounting.reports.trialbalance.read`, `accounting.attachments.read` |
+| `bookkeeper` | read-only + `accounting.invoices`, `accounting.payments`, `accounting.banktransactions`, `accounting.manualjournals`, `accounting.contacts`, `accounting.attachments` |
+| `full-access` | All available granular accounting scopes |
+| `reports-only` | `openid`, `offline_access`, `accounting.reports.profitandloss.read`, `accounting.reports.balancesheet.read`, `accounting.reports.aged.read`, `accounting.reports.banksummary.read`, `accounting.reports.trialbalance.read`, `accounting.reports.executivesummary.read`, `accounting.reports.taxreports.read`, `accounting.settings.read` |
 
 ---
 
@@ -803,12 +803,12 @@ auto_wait = true                   # Auto-wait on rate limit instead of failing
 [profiles.default]
 tenant_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 org_name = "My Company"
-scopes = ["offline_access", "accounting.transactions", "accounting.contacts", "accounting.settings", "accounting.reports.read"]
+scopes = ["offline_access", "accounting.invoices", "accounting.payments", "accounting.contacts", "accounting.settings", "accounting.reports.profitandloss.read"]
 
 [profiles.client_a]
 tenant_id = "yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy"
 org_name = "Client A"
-scopes = ["offline_access", "accounting.transactions.read", "accounting.contacts.read"]
+scopes = ["offline_access", "accounting.invoices.read", "accounting.contacts.read"]
 ```
 
 ### 10.2 Environment Variables
@@ -855,7 +855,7 @@ Error: × Rate limit exceeded (429 Too Many Requests)
 ```
 Error: × Missing required scope: accounting.settings
   ├─▶ The 'accounts' endpoint requires the 'accounting.settings' scope
-  ╰─▶ Current scopes: accounting.transactions, accounting.contacts
+  ╰─▶ Current scopes: accounting.invoices, accounting.contacts
 
   help: Run `xero auth scopes add accounting.settings` to add
         the required scope. This will require re-authentication.

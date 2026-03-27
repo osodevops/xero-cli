@@ -110,7 +110,7 @@ page_size = 100
 [auth]
 client_id = "your_client_id"
 callback_port = 8080
-scopes = ["openid", "offline_access", "accounting.transactions.read"]
+scopes = ["openid", "offline_access", "accounting.invoices.read", "accounting.contacts.read"]
 
 [rate_limit]
 calls_per_minute = 60

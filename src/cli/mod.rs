@@ -156,7 +156,7 @@ pub enum Commands {
     ///
     /// List, get, create, and update sales invoices (ACCREC) and bills (ACCPAY).
     /// Supports filtering by status, contact, date range, and custom where clauses.
-    /// Requires OAuth scope: accounting.transactions or accounting.transactions.read.
+    /// Requires OAuth scope: accounting.invoices or accounting.invoices.read.
     Invoices {
         #[command(subcommand)]
         command: invoices::InvoiceCommands,
@@ -189,7 +189,7 @@ pub enum Commands {
     ///
     /// List, get, create, and delete payments against invoices and credit notes.
     /// View payment history for audit trails.
-    /// Requires OAuth scope: accounting.transactions or accounting.transactions.read.
+    /// Requires OAuth scope: accounting.payments or accounting.payments.read.
     Payments {
         #[command(subcommand)]
         command: payments::PaymentCommands,
@@ -209,7 +209,7 @@ pub enum Commands {
     ///
     /// List, get, create, and delete spend and receive money transactions.
     /// These are transactions that appear on bank statements.
-    /// Requires OAuth scope: accounting.transactions or accounting.transactions.read.
+    /// Requires OAuth scope: accounting.banktransactions or accounting.banktransactions.read.
     #[command(name = "bank-transactions")]
     BankTransactions {
         #[command(subcommand)]
@@ -219,7 +219,7 @@ pub enum Commands {
     /// Manage bank transfers
     ///
     /// List, get, and create transfers between bank accounts.
-    /// Requires OAuth scope: accounting.transactions or accounting.transactions.read.
+    /// Requires OAuth scope: accounting.banktransactions or accounting.banktransactions.read.
     #[command(name = "bank-transfers")]
     BankTransfers {
         #[command(subcommand)]
@@ -230,7 +230,7 @@ pub enum Commands {
     ///
     /// List, get, create, and allocate credit notes against invoices.
     /// Credit notes reduce the amount owing on an invoice.
-    /// Requires OAuth scope: accounting.transactions or accounting.transactions.read.
+    /// Requires OAuth scope: accounting.invoices or accounting.invoices.read.
     #[command(name = "credit-notes")]
     CreditNotes {
         #[command(subcommand)]
@@ -241,7 +241,7 @@ pub enum Commands {
     ///
     /// List, get, and create purchase orders for supplier orders.
     /// Status values: DRAFT, SUBMITTED, AUTHORISED, BILLED, DELETED.
-    /// Requires OAuth scope: accounting.transactions or accounting.transactions.read.
+    /// Requires OAuth scope: accounting.invoices or accounting.invoices.read.
     #[command(name = "purchase-orders")]
     PurchaseOrders {
         #[command(subcommand)]
@@ -252,7 +252,7 @@ pub enum Commands {
     ///
     /// List, get, create, and update quotes (estimates).
     /// Status values: DRAFT, SENT, ACCEPTED, INVOICED, DECLINED, DELETED.
-    /// Requires OAuth scope: accounting.transactions or accounting.transactions.read.
+    /// Requires OAuth scope: accounting.invoices or accounting.invoices.read.
     Quotes {
         #[command(subcommand)]
         command: quotes::QuoteCommands,
@@ -308,7 +308,7 @@ pub enum Commands {
     /// Manage repeating invoices
     ///
     /// List and view recurring invoice templates.
-    /// Requires OAuth scope: accounting.transactions or accounting.transactions.read.
+    /// Requires OAuth scope: accounting.invoices or accounting.invoices.read.
     #[command(name = "repeating-invoices")]
     RepeatingInvoices {
         #[command(subcommand)]
@@ -339,7 +339,7 @@ pub enum Commands {
     ///
     /// Generate Profit & Loss, Balance Sheet, Trial Balance, Bank Summary,
     /// Budget Summary, Executive Summary, Aged Receivables, and Aged Payables reports.
-    /// Requires OAuth scope: accounting.reports.read.
+    /// Requires granular report scopes (e.g. accounting.reports.profitandloss.read).
     Reports {
         #[command(subcommand)]
         command: reports::ReportCommands,
@@ -370,7 +370,7 @@ pub enum Commands {
     ///
     /// List, get, create, and update manual journal entries.
     /// Manual journals must have at least two lines that balance to zero.
-    /// Requires OAuth scope: accounting.transactions or accounting.transactions.read.
+    /// Requires OAuth scope: accounting.manualjournals or accounting.manualjournals.read.
     #[command(name = "manual-journals")]
     ManualJournals {
         #[command(subcommand)]
@@ -381,7 +381,7 @@ pub enum Commands {
     ///
     /// List, get, create, update, and delete linked transactions.
     /// Linked transactions connect billable expenses to customer invoices.
-    /// Requires OAuth scope: accounting.transactions or accounting.transactions.read.
+    /// Requires OAuth scope: accounting.invoices or accounting.invoices.read.
     #[command(name = "linked-transactions")]
     LinkedTransactions {
         #[command(subcommand)]
@@ -392,7 +392,7 @@ pub enum Commands {
     ///
     /// List, get, and create expense receipts.
     /// Receipts are submitted by users and attached to expense claims.
-    /// Requires OAuth scope: accounting.transactions or accounting.transactions.read.
+    /// Requires OAuth scope: accounting.classicexpenses or accounting.classicexpenses.read.
     Receipts {
         #[command(subcommand)]
         command: receipts::ReceiptCommands,
@@ -402,7 +402,7 @@ pub enum Commands {
     ///
     /// List, get, create, and delete batch payments.
     /// Batch payments allow multiple invoices to be paid in a single transaction.
-    /// Requires OAuth scope: accounting.transactions or accounting.transactions.read.
+    /// Requires OAuth scope: accounting.payments or accounting.payments.read.
     #[command(name = "batch-payments")]
     BatchPayments {
         #[command(subcommand)]
@@ -414,7 +414,7 @@ pub enum Commands {
     /// List, get, create, and update expense claims.
     /// Expense claims group receipts for reimbursement.
     /// Status values: SUBMITTED, AUTHORISED, PAID, VOIDED.
-    /// Requires OAuth scope: accounting.transactions or accounting.transactions.read.
+    /// Requires OAuth scope: accounting.classicexpenses or accounting.classicexpenses.read.
     #[command(name = "expense-claims")]
     ExpenseClaims {
         #[command(subcommand)]
@@ -425,7 +425,7 @@ pub enum Commands {
     ///
     /// List, get, and allocate overpayments to invoices.
     /// Overpayments occur when a payment exceeds the invoice amount.
-    /// Requires OAuth scope: accounting.transactions or accounting.transactions.read.
+    /// Requires OAuth scope: accounting.payments or accounting.payments.read.
     Overpayments {
         #[command(subcommand)]
         command: overpayments::OverpaymentCommands,
@@ -435,7 +435,7 @@ pub enum Commands {
     ///
     /// List, get, and allocate prepayments to invoices.
     /// Prepayments are advance payments before an invoice is raised.
-    /// Requires OAuth scope: accounting.transactions or accounting.transactions.read.
+    /// Requires OAuth scope: accounting.payments or accounting.payments.read.
     Prepayments {
         #[command(subcommand)]
         command: prepayments::PrepaymentCommands,
