@@ -75,6 +75,10 @@ pub enum BankTransactionType {
     SpendPrepayment,
     #[serde(rename = "RECEIVE-PREPAYMENT")]
     ReceivePrepayment,
+    #[serde(rename = "SPEND-TRANSFER")]
+    SpendTransfer,
+    #[serde(rename = "RECEIVE-TRANSFER")]
+    ReceiveTransfer,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -92,6 +96,8 @@ impl std::fmt::Display for BankTransactionType {
             Self::ReceiveOverpayment => write!(f, "RECEIVE-OVERPAYMENT"),
             Self::SpendPrepayment => write!(f, "SPEND-PREPAYMENT"),
             Self::ReceivePrepayment => write!(f, "RECEIVE-PREPAYMENT"),
+            Self::SpendTransfer => write!(f, "SPEND-TRANSFER"),
+            Self::ReceiveTransfer => write!(f, "RECEIVE-TRANSFER"),
         }
     }
 }
@@ -139,5 +145,29 @@ mod tests {
     fn bank_transaction_type_display() {
         assert_eq!(BankTransactionType::SPEND.to_string(), "SPEND");
         assert_eq!(BankTransactionType::RECEIVE.to_string(), "RECEIVE");
+        assert_eq!(BankTransactionType::SpendTransfer.to_string(), "SPEND-TRANSFER");
+        assert_eq!(BankTransactionType::ReceiveTransfer.to_string(), "RECEIVE-TRANSFER");
+    }
+
+    #[test]
+    fn deserialize_spend_transfer() {
+        let json = r#"{
+            "BankTransactionID": "bt-456",
+            "Type": "SPEND-TRANSFER",
+            "Status": "AUTHORISED"
+        }"#;
+        let bt: BankTransaction = serde_json::from_str(json).unwrap();
+        assert_eq!(bt.transaction_type, Some(BankTransactionType::SpendTransfer));
+    }
+
+    #[test]
+    fn deserialize_receive_transfer() {
+        let json = r#"{
+            "BankTransactionID": "bt-789",
+            "Type": "RECEIVE-TRANSFER",
+            "Status": "AUTHORISED"
+        }"#;
+        let bt: BankTransaction = serde_json::from_str(json).unwrap();
+        assert_eq!(bt.transaction_type, Some(BankTransactionType::ReceiveTransfer));
     }
 }

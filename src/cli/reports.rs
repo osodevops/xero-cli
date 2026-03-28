@@ -1,7 +1,9 @@
-use crate::api::endpoints::reports;
+use crate::api::endpoints::{contacts, reports};
+use crate::cache::CachedClient;
 use crate::cli::common::build_client;
 use crate::cli::GlobalArgs;
-use crate::models::report::Report;
+use crate::error;
+use crate::models::report::{Report, ReportRow};
 use crate::output::{self, Tabular};
 use clap::Subcommand;
 
@@ -114,37 +116,43 @@ EXAMPLES:
     ExecutiveSummary,
     /// Aged Receivables by Contact
     ///
-    /// Generates an Aged Receivables report for a single contact, showing
-    /// outstanding invoices grouped into aging buckets (current, 30, 60, 90+
-    /// days). Useful for chasing overdue payments.
+    /// Generates an Aged Receivables report showing outstanding invoices
+    /// grouped into aging buckets (current, 30, 60, 90+ days). When --contact
+    /// is omitted, fetches the report for all customers automatically.
     #[command(after_long_help = "\
 EXAMPLES:
+  # Aged receivables for all customers
+  xero reports aged-receivables
+
   # Aged receivables for a specific contact
   xero reports aged-receivables --contact 00000000-0000-0000-0000-000000000000
 
   # Output as JSON
-  xero reports aged-receivables --contact <CONTACT_ID> -o json")]
+  xero reports aged-receivables -o json")]
     AgedReceivables {
-        /// Xero contact UUID to generate the report for
+        /// Xero contact UUID (omit for all customers)
         #[arg(long)]
-        contact: String,
+        contact: Option<String>,
     },
     /// Aged Payables by Contact
     ///
-    /// Generates an Aged Payables report for a single contact, showing
-    /// outstanding bills grouped into aging buckets (current, 30, 60, 90+
-    /// days). Helps track what you owe to suppliers.
+    /// Generates an Aged Payables report showing outstanding bills grouped
+    /// into aging buckets (current, 30, 60, 90+ days). When --contact is
+    /// omitted, fetches the report for all suppliers automatically.
     #[command(after_long_help = "\
 EXAMPLES:
+  # Aged payables for all suppliers
+  xero reports aged-payables
+
   # Aged payables for a specific contact
   xero reports aged-payables --contact 00000000-0000-0000-0000-000000000000
 
   # Output as JSON
-  xero reports aged-payables --contact <CONTACT_ID> -o json")]
+  xero reports aged-payables -o json")]
     AgedPayables {
-        /// Xero contact UUID to generate the report for
+        /// Xero contact UUID (omit for all suppliers)
         #[arg(long)]
-        contact: String,
+        contact: Option<String>,
     },
 }
 
@@ -244,14 +252,38 @@ pub async fn execute(command: ReportCommands, global: &GlobalArgs) -> miette::Re
         ReportCommands::ExecutiveSummary => reports::executive_summary(&client)
             .await
             .map_err(|e| miette::miette!("{e}"))?,
-        ReportCommands::AgedReceivables { contact } => reports::aged_receivables(&client, &contact)
-            .await
-            .map_err(|e| miette::miette!("{e}"))?,
-        ReportCommands::AgedPayables { contact } => reports::aged_payables(&client, &contact)
-            .await
-            .map_err(|e| miette::miette!("{e}"))?,
+        ReportCommands::AgedReceivables { contact } => match contact {
+            Some(id) => reports::aged_receivables(&client, &id)
+                .await
+                .map_err(|e| miette::miette!("{e}"))?,
+            None => {
+                return execute_aged_report_all(
+                    &client,
+                    global,
+                    AgedReportKind::Receivables,
+                )
+                .await;
+            }
+        },
+        ReportCommands::AgedPayables { contact } => match contact {
+            Some(id) => reports::aged_payables(&client, &id)
+                .await
+                .map_err(|e| miette::miette!("{e}"))?,
+            None => {
+                return execute_aged_report_all(
+                    &client,
+                    global,
+                    AgedReportKind::Payables,
+                )
+                .await;
+            }
+        },
     };
 
+    render_report(&report, global)
+}
+
+fn render_report(report: &Report, global: &GlobalArgs) -> miette::Result<()> {
     if let Some(name) = &report.report_name {
         if !global.quiet {
             eprintln!("Report: {name}");
@@ -260,17 +292,144 @@ pub async fn execute(command: ReportCommands, global: &GlobalArgs) -> miette::Re
 
     match global.output {
         crate::output::OutputFormat::Table => {
-            let flat = flatten_report(&report);
+            let flat = flatten_report(report);
             let rendered = output::render(&flat, global.output, global.compact)
                 .map_err(|e| miette::miette!("{e}"))?;
             println!("{rendered}");
         }
         _ => {
-            let rendered = output::render_single(&report, global.output, global.compact)
+            let rendered = output::render_single(report, global.output, global.compact)
                 .map_err(|e| miette::miette!("{e}"))?;
             println!("{rendered}");
         }
     }
 
     Ok(())
+}
+
+enum AgedReportKind {
+    Receivables,
+    Payables,
+}
+
+impl AgedReportKind {
+    fn where_clause(&self) -> &str {
+        match self {
+            Self::Receivables => "IsCustomer==true",
+            Self::Payables => "IsSupplier==true",
+        }
+    }
+
+    fn title(&self) -> &str {
+        match self {
+            Self::Receivables => "Aged Receivables",
+            Self::Payables => "Aged Payables",
+        }
+    }
+
+    async fn fetch(&self, client: &CachedClient, contact_id: &str) -> error::Result<Report> {
+        match self {
+            Self::Receivables => reports::aged_receivables(client, contact_id).await,
+            Self::Payables => reports::aged_payables(client, contact_id).await,
+        }
+    }
+}
+
+async fn execute_aged_report_all(
+    client: &CachedClient,
+    global: &GlobalArgs,
+    kind: AgedReportKind,
+) -> miette::Result<()> {
+    let report_title = kind.title();
+    let contact_list = contacts::list_all(client, Some(kind.where_clause()))
+        .await
+        .map_err(|e| miette::miette!("{e}"))?;
+
+    if contact_list.is_empty() {
+        eprintln!("No contacts found matching filter: {}", kind.where_clause());
+        return Ok(());
+    }
+
+    if !global.quiet {
+        eprintln!(
+            "Fetching {} report for {} contacts...",
+            report_title,
+            contact_list.len()
+        );
+    }
+
+    let pb = if !global.quiet {
+        let bar = indicatif::ProgressBar::new(contact_list.len() as u64);
+        bar.set_style(
+            indicatif::ProgressStyle::default_bar()
+                .template("{bar:40} {pos}/{len} {msg}")
+                .unwrap(),
+        );
+        Some(bar)
+    } else {
+        None
+    };
+
+    let mut combined_rows: Vec<ReportRow> = Vec::new();
+
+    for contact in &contact_list {
+        let name = contact.name.as_deref().unwrap_or("Unknown");
+        let id = match contact.contact_id.as_deref() {
+            Some(id) => id,
+            None => {
+                if let Some(ref bar) = pb {
+                    bar.inc(1);
+                }
+                continue;
+            }
+        };
+
+        if let Some(ref bar) = pb {
+            bar.set_message(name.to_string());
+        }
+
+        match kind.fetch(client, id).await {
+            Ok(report) => {
+                // Add a section row with the contact name as title, containing
+                // the report's data rows as sub-rows.
+                let section = ReportRow {
+                    row_type: Some("Section".to_string()),
+                    title: Some(name.to_string()),
+                    cells: Vec::new(),
+                    rows: report.rows,
+                };
+                combined_rows.push(section);
+            }
+            Err(e) => {
+                if !global.quiet {
+                    if let Some(ref bar) = pb {
+                        bar.suspend(|| {
+                            eprintln!("Warning: skipping {name}: {e}");
+                        });
+                    } else {
+                        eprintln!("Warning: skipping {name}: {e}");
+                    }
+                }
+            }
+        }
+
+        if let Some(ref bar) = pb {
+            bar.inc(1);
+        }
+    }
+
+    if let Some(bar) = pb {
+        bar.finish_and_clear();
+    }
+
+    let combined = Report {
+        report_id: None,
+        report_name: Some(format!("{report_title} - All Contacts")),
+        report_type: Some(report_title.to_string()),
+        report_date: None,
+        updated_date_utc: None,
+        rows: combined_rows,
+    };
+
+    render_report(&combined, global)
 }

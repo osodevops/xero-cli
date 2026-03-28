@@ -431,10 +431,14 @@ xero payments history <ID>
 ```
 
 #### Bank Transactions
+
+Transaction types: SPEND, RECEIVE, SPEND-TRANSFER, RECEIVE-TRANSFER, SPEND-OVERPAYMENT, RECEIVE-OVERPAYMENT, SPEND-PREPAYMENT, RECEIVE-PREPAYMENT.
+
 ```bash
 xero bank-transactions list
 xero bank-transactions list --account <AccountID>
 xero bank-transactions list --from 2025-01-01
+xero bank-transactions list --where 'Type=="SPEND-TRANSFER"'
 xero bank-transactions get <ID>
 xero bank-transactions create --file transaction.json
 xero bank-transactions delete <ID>
@@ -513,11 +517,11 @@ xero reports budget-summary
 xero reports executive-summary
 xero reports aged-payables --contact <ContactID>
 xero reports aged-receivables --contact <ContactID>
-xero reports aged-payables --all-contacts        # Aggregate (workaround for API limitation)
-xero reports aged-receivables --all-contacts      # Aggregate (workaround for API limitation)
+xero reports aged-payables                       # All suppliers (auto-iterates contacts)
+xero reports aged-receivables                    # All customers (auto-iterates contacts)
 ```
 
-> **Note on Aged Reports:** The Xero API only returns totals per contact without age breakdown via the summary endpoint. Our `--all-contacts` flag iterates individual contacts and aggregates the per-contact aged data into a proper aging report with 30/60/90/120+ day buckets. This addresses a major developer pain point.
+> **Note on Aged Reports:** The Xero API only provides per-contact aged report endpoints. When `--contact` is omitted, xero-cli automatically fetches all customers (receivables) or suppliers (payables) and iterates each contact to build a combined report with per-contact sections showing aging buckets. A progress bar displays on stderr during iteration.
 
 #### Tax Rates
 ```bash
@@ -920,23 +924,20 @@ These address specific Xero API limitations that frustrate developers.
 
 ### 13.1 Aged Debtor/Creditor Report (Full)
 
-The Xero API only returns totals per contact without aging buckets. This command aggregates per-contact data.
+The Xero API only provides per-contact aged report endpoints. When `--contact` is omitted, xero-cli auto-iterates all customers (receivables) or suppliers (payables) and builds a combined report.
 
 ```bash
-# Full aged receivables with 30/60/90/120+ buckets
-xero smart aged-receivables
-┌─────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
-│ Contact         │ Current  │ 30 Days  │ 60 Days  │ 90 Days  │ 120+ Days│
-├─────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
-│ Acme Corp       │ £500.00  │ £250.00  │    £0.00 │  £100.00 │    £0.00 │
-│ Widget Co       │   £0.00  │   £0.00  │ £800.00  │    £0.00 │  £150.00 │
-└─────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+# Aged receivables for all customers (auto-iterates)
+xero reports aged-receivables
 
-# Same for payables
-xero smart aged-payables
+# Aged payables for all suppliers
+xero reports aged-payables
+
+# Single contact
+xero reports aged-receivables --contact <ContactID>
 
 # Export
-xero smart aged-receivables -o csv > aged-ar.csv
+xero reports aged-receivables -o csv > aged-ar.csv
 ```
 
 ### 13.2 Account Transactions Extract
@@ -1125,7 +1126,7 @@ These are deliberate Xero API limitations that the CLI should handle gracefully:
 | Limitation | Impact | CLI Mitigation |
 |---|---|---|
 | No bank reconciliation API | Cannot automate matching bank lines to transactions | Document clearly; focus on bank transaction CRUD instead |
-| Aged reports lack aging buckets | Summary endpoint returns totals only | `xero smart aged-receivables` aggregates per-contact data |
+| Aged reports per-contact only | Xero API requires contactID for aged reports | `xero reports aged-receivables` auto-iterates all customers when `--contact` is omitted |
 | Cannot send statements via API | No programmatic statement delivery | Note in help text; suggest Xero UI |
 | Journals limited to 100/page | Cannot use pageSize param | Auto-paginate using offset, track progress |
 | No detailed account transaction endpoint | Must combine invoices + bank txns + journals | `xero smart account-transactions` command |

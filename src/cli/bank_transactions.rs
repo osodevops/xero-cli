@@ -9,9 +9,9 @@ use clap::Subcommand;
 pub enum BankTransactionCommands {
     /// List bank transactions
     ///
-    /// Retrieve bank transactions (spend or receive money) with optional
-    /// filtering by bank account, date range, and custom where clause.
-    /// Results include SPEND and RECEIVE transaction types.
+    /// Retrieve bank transactions with optional filtering by bank account,
+    /// date range, and custom where clause. Transaction types include SPEND,
+    /// RECEIVE, SPEND-TRANSFER, RECEIVE-TRANSFER, and overpayment/prepayment variants.
     #[command(after_long_help = "\
 EXAMPLES:
   xero bank-transactions list

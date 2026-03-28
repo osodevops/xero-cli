@@ -70,6 +70,19 @@ pub async fn create(client: &CachedClient, contact: &serde_json::Value) -> Resul
         .ok_or_else(|| crate::error::XeroCliError::api(500, "No contact returned from create"))
 }
 
+pub async fn list_all(client: &CachedClient, where_clause: Option<&str>) -> Result<Vec<Contact>> {
+    let mut base_params: Vec<(&str, &str)> = Vec::new();
+    if let Some(wc) = where_clause {
+        base_params.push(("where", wc));
+    }
+    crate::api::pagination::paginate_all(client, "Contacts", &base_params, 100, |v| {
+        serde_json::from_value::<ContactsWrapper>(v.clone())
+            .ok()
+            .map(|w| w.contacts)
+    })
+    .await
+}
+
 pub async fn update(
     client: &CachedClient,
     contact_id: &str,

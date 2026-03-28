@@ -9,6 +9,10 @@
 - Update all four scope presets (read-only, bookkeeper, full-access, reports-only) with granular scopes
 - Update help text and doc comments with correct granular scope names
 
+### Added
+- Add `SPEND-TRANSFER` and `RECEIVE-TRANSFER` bank transaction types — fixes parsing failure on inter-account transfers
+- Add company-wide aged receivables/payables reports — `--contact` is now optional; omitting it auto-iterates all customers/suppliers with a progress bar
+
 ### Fixed
 - Fix `unauthorized_client` error when authenticating with Xero apps created after March 2, 2026
 - Fix `invalid_client` error during token exchange by adding `XERO_CLIENT_SECRET` support for Web app (confidential client) PKCE flow
