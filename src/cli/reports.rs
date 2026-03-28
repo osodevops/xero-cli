@@ -257,12 +257,7 @@ pub async fn execute(command: ReportCommands, global: &GlobalArgs) -> miette::Re
                 .await
                 .map_err(|e| miette::miette!("{e}"))?,
             None => {
-                return execute_aged_report_all(
-                    &client,
-                    global,
-                    AgedReportKind::Receivables,
-                )
-                .await;
+                return execute_aged_report_all(&client, global, AgedReportKind::Receivables).await;
             }
         },
         ReportCommands::AgedPayables { contact } => match contact {
@@ -270,12 +265,7 @@ pub async fn execute(command: ReportCommands, global: &GlobalArgs) -> miette::Re
                 .await
                 .map_err(|e| miette::miette!("{e}"))?,
             None => {
-                return execute_aged_report_all(
-                    &client,
-                    global,
-                    AgedReportKind::Payables,
-                )
-                .await;
+                return execute_aged_report_all(&client, global, AgedReportKind::Payables).await;
             }
         },
     };

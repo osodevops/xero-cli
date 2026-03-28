@@ -145,8 +145,14 @@ mod tests {
     fn bank_transaction_type_display() {
         assert_eq!(BankTransactionType::SPEND.to_string(), "SPEND");
         assert_eq!(BankTransactionType::RECEIVE.to_string(), "RECEIVE");
-        assert_eq!(BankTransactionType::SpendTransfer.to_string(), "SPEND-TRANSFER");
-        assert_eq!(BankTransactionType::ReceiveTransfer.to_string(), "RECEIVE-TRANSFER");
+        assert_eq!(
+            BankTransactionType::SpendTransfer.to_string(),
+            "SPEND-TRANSFER"
+        );
+        assert_eq!(
+            BankTransactionType::ReceiveTransfer.to_string(),
+            "RECEIVE-TRANSFER"
+        );
     }
 
     #[test]
@@ -157,7 +163,10 @@ mod tests {
             "Status": "AUTHORISED"
         }"#;
         let bt: BankTransaction = serde_json::from_str(json).unwrap();
-        assert_eq!(bt.transaction_type, Some(BankTransactionType::SpendTransfer));
+        assert_eq!(
+            bt.transaction_type,
+            Some(BankTransactionType::SpendTransfer)
+        );
     }
 
     #[test]
@@ -168,6 +177,9 @@ mod tests {
             "Status": "AUTHORISED"
         }"#;
         let bt: BankTransaction = serde_json::from_str(json).unwrap();
-        assert_eq!(bt.transaction_type, Some(BankTransactionType::ReceiveTransfer));
+        assert_eq!(
+            bt.transaction_type,
+            Some(BankTransactionType::ReceiveTransfer)
+        );
     }
 }
