@@ -33,7 +33,6 @@ rust_decimal = { version = "1", features = ["serde-with-str"] }
 comfy-table = "7"
 csv = "1"
 oauth2 = "5"
-keyring = { version = "3", features = ["apple-native", "windows-native", "linux-native"] }
 tiny_http = "0.12"
 open = "5"
 uuid = { version = "1", features = ["v4"] }

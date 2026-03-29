@@ -2,104 +2,44 @@ use crate::auth::TokenSet;
 use crate::error::{Result, XeroCliError};
 use std::path::PathBuf;
 
-const SERVICE_NAME: &str = "xero-cli";
-const KEYRING_USER: &str = "xero-tokens";
-
 pub struct TokenStore {
-    fallback_path: PathBuf,
+    token_path: PathBuf,
 }
 
 impl TokenStore {
     pub fn new(config_dir: PathBuf) -> Self {
         Self {
-            fallback_path: config_dir.join("tokens.json"),
+            token_path: config_dir.join("tokens.json"),
         }
     }
 
     pub fn save(&self, tokens: &TokenSet) -> Result<()> {
-        // Try OS keychain first
-        if self.save_to_keychain(tokens).is_ok() {
-            tracing::debug!("Tokens saved to OS keychain");
-            return Ok(());
-        }
-
-        // Fallback to file
-        tracing::debug!("Keychain unavailable, saving tokens to file");
-        self.save_to_file(tokens)
-    }
-
-    pub fn load(&self) -> Result<TokenSet> {
-        // Try OS keychain first
-        if let Ok(tokens) = self.load_from_keychain() {
-            return Ok(tokens);
-        }
-
-        // Fallback to file
-        self.load_from_file()
-    }
-
-    pub fn clear(&self) -> Result<()> {
-        let _ = self.clear_keychain();
-        let _ = self.clear_file();
-        Ok(())
-    }
-
-    fn save_to_keychain(&self, tokens: &TokenSet) -> Result<()> {
-        let json = serde_json::to_string(tokens)?;
-        let entry = keyring::Entry::new(SERVICE_NAME, KEYRING_USER)
-            .map_err(|e| XeroCliError::auth(format!("Keychain error: {e}")))?;
-        entry
-            .set_password(&json)
-            .map_err(|e| XeroCliError::auth(format!("Failed to save to keychain: {e}")))?;
-        Ok(())
-    }
-
-    fn load_from_keychain(&self) -> Result<TokenSet> {
-        let entry = keyring::Entry::new(SERVICE_NAME, KEYRING_USER)
-            .map_err(|e| XeroCliError::auth(format!("Keychain error: {e}")))?;
-        let json = entry
-            .get_password()
-            .map_err(|e| XeroCliError::auth(format!("Failed to load from keychain: {e}")))?;
-        let tokens: TokenSet = serde_json::from_str(&json)?;
-        Ok(tokens)
-    }
-
-    fn clear_keychain(&self) -> Result<()> {
-        let entry = keyring::Entry::new(SERVICE_NAME, KEYRING_USER)
-            .map_err(|e| XeroCliError::auth(format!("Keychain error: {e}")))?;
-        entry
-            .delete_credential()
-            .map_err(|e| XeroCliError::auth(format!("Failed to clear keychain: {e}")))?;
-        Ok(())
-    }
-
-    fn save_to_file(&self, tokens: &TokenSet) -> Result<()> {
-        if let Some(parent) = self.fallback_path.parent() {
+        if let Some(parent) = self.token_path.parent() {
             std::fs::create_dir_all(parent)?;
         }
         let json = serde_json::to_string_pretty(tokens)?;
-        std::fs::write(&self.fallback_path, json)?;
+        std::fs::write(&self.token_path, json)?;
 
-        // Set restrictive permissions on Unix
+        // Set restrictive permissions on Unix (owner read/write only)
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
-            std::fs::set_permissions(&self.fallback_path, std::fs::Permissions::from_mode(0o600))?;
+            std::fs::set_permissions(&self.token_path, std::fs::Permissions::from_mode(0o600))?;
         }
 
         Ok(())
     }
 
-    fn load_from_file(&self) -> Result<TokenSet> {
-        let json = std::fs::read_to_string(&self.fallback_path)
+    pub fn load(&self) -> Result<TokenSet> {
+        let json = std::fs::read_to_string(&self.token_path)
             .map_err(|_| XeroCliError::auth("No stored credentials found"))?;
         let tokens: TokenSet = serde_json::from_str(&json)?;
         Ok(tokens)
     }
 
-    fn clear_file(&self) -> Result<()> {
-        if self.fallback_path.exists() {
-            std::fs::remove_file(&self.fallback_path)?;
+    pub fn clear(&self) -> Result<()> {
+        if self.token_path.exists() {
+            std::fs::remove_file(&self.token_path)?;
         }
         Ok(())
     }
@@ -126,8 +66,8 @@ mod tests {
         let store = TokenStore::new(dir.path().to_path_buf());
         let tokens = make_test_tokens();
 
-        store.save_to_file(&tokens).unwrap();
-        let loaded = store.load_from_file().unwrap();
+        store.save(&tokens).unwrap();
+        let loaded = store.load().unwrap();
 
         assert_eq!(loaded.access_token, tokens.access_token);
         assert_eq!(loaded.refresh_token, tokens.refresh_token);
@@ -135,22 +75,22 @@ mod tests {
     }
 
     #[test]
-    fn clear_file_removes_tokens() {
+    fn clear_removes_tokens() {
         let dir = tempfile::tempdir().unwrap();
         let store = TokenStore::new(dir.path().to_path_buf());
         let tokens = make_test_tokens();
 
-        store.save_to_file(&tokens).unwrap();
-        assert!(store.fallback_path.exists());
+        store.save(&tokens).unwrap();
+        assert!(store.token_path.exists());
 
-        store.clear_file().unwrap();
-        assert!(!store.fallback_path.exists());
+        store.clear().unwrap();
+        assert!(!store.token_path.exists());
     }
 
     #[test]
     fn load_missing_file_returns_error() {
         let dir = tempfile::tempdir().unwrap();
         let store = TokenStore::new(dir.path().to_path_buf());
-        assert!(store.load_from_file().is_err());
+        assert!(store.load().is_err());
     }
 }
