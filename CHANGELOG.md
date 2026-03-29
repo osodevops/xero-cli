@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.5.1] - 2026-03-29
+
+### Added
+- Add `SPEND-TRANSFER` and `RECEIVE-TRANSFER` bank transaction types — fixes parsing failure on inter-account transfers
+- Add company-wide aged receivables/payables reports — `--contact` is now optional; omitting it auto-iterates all customers/suppliers with a progress bar
+
+### Fixed
+- Fix token refresh failing with `invalid_client` for Web apps — `XERO_CLIENT_SECRET` now used for refresh
+- Preserve tenant_id and scopes across token refreshes
+- Fix security audit: update quinn-proto and rustls-webpki
+
+### Changed
+- Replace OS keychain token storage with file-based storage (`tokens.json` with `0600` permissions) — eliminates repeated macOS keychain password prompts
+- Remove `keyring` dependency
+
 ## [0.5.0] - 2026-03-27
 
 ### Changed
