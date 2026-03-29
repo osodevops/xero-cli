@@ -39,7 +39,12 @@ Or use environment variables:
 
 ```bash
 export XERO_CLIENT_ID=your_client_id
+export XERO_CLIENT_SECRET=your_client_secret
 ```
+
+> **Note:** Xero Web apps require a client secret. Generate one in the Xero Developer Portal
+> under your app's configuration, then set `XERO_CLIENT_SECRET` in your shell profile.
+> This is needed for both login and automatic token refresh.
 
 ### 3. Authenticate
 
@@ -140,7 +145,7 @@ xero completions fish > ~/.config/fish/completions/xero.fish
 | Variable | Description |
 |---|---|
 | `XERO_CLIENT_ID` | OAuth2 client ID |
-| `XERO_CLIENT_SECRET` | OAuth2 client secret (M2M only) |
+| `XERO_CLIENT_SECRET` | OAuth2 client secret (required for Web apps) |
 | `XERO_ACCESS_TOKEN` | Direct access token (bypasses auth) |
 | `XERO_TENANT_ID` | Xero tenant/organisation ID |
 | `XERO_PROFILE` | Active config profile name |

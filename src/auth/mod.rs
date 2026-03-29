@@ -43,7 +43,11 @@ impl TokenSet {
     }
 }
 
-pub async fn ensure_authenticated(store: &TokenStore, client_id: &str) -> Result<TokenSet> {
+pub async fn ensure_authenticated(
+    store: &TokenStore,
+    client_id: &str,
+    client_secret: Option<&str>,
+) -> Result<TokenSet> {
     let tokens = store
         .load()
         .map_err(|_| XeroCliError::auth("No stored credentials found"))?;
@@ -51,7 +55,15 @@ pub async fn ensure_authenticated(store: &TokenStore, client_id: &str) -> Result
     if tokens.is_expired() {
         if let Some(ref refresh_token) = tokens.refresh_token {
             tracing::info!("Access token expired, refreshing...");
-            let new_tokens = refresh::refresh_token(client_id, refresh_token).await?;
+            let mut new_tokens =
+                refresh::refresh_token(client_id, client_secret, refresh_token).await?;
+            // Preserve tenant_id and scopes from original auth
+            if new_tokens.tenant_id.is_none() {
+                new_tokens.tenant_id = tokens.tenant_id.clone();
+            }
+            if new_tokens.scopes.is_empty() {
+                new_tokens.scopes = tokens.scopes.clone();
+            }
             store.save(&new_tokens)?;
             return Ok(new_tokens);
         }
@@ -66,8 +78,14 @@ pub async fn ensure_authenticated(store: &TokenStore, client_id: &str) -> Result
                 "Pre-emptively refreshing token (expires in {}s)",
                 tokens.time_remaining().num_seconds()
             );
-            match refresh::refresh_token(client_id, refresh_token).await {
-                Ok(new_tokens) => {
+            match refresh::refresh_token(client_id, client_secret, refresh_token).await {
+                Ok(mut new_tokens) => {
+                    if new_tokens.tenant_id.is_none() {
+                        new_tokens.tenant_id = tokens.tenant_id.clone();
+                    }
+                    if new_tokens.scopes.is_empty() {
+                        new_tokens.scopes = tokens.scopes.clone();
+                    }
                     store.save(&new_tokens)?;
                     return Ok(new_tokens);
                 }

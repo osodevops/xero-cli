@@ -25,6 +25,8 @@ pub async fn build_client(global: &GlobalArgs) -> Result<CachedClient> {
         .unwrap_or_default()
         .to_string();
 
+    let client_secret = std::env::var("XERO_CLIENT_SECRET").ok();
+
     // Check for direct access token override (for testing/CI)
     let tokens = if let Ok(token) = std::env::var("XERO_ACCESS_TOKEN") {
         TokenSet {
@@ -36,7 +38,7 @@ pub async fn build_client(global: &GlobalArgs) -> Result<CachedClient> {
             tenant_id: std::env::var("XERO_TENANT_ID").ok(),
         }
     } else {
-        crate::auth::ensure_authenticated(&store, &client_id).await?
+        crate::auth::ensure_authenticated(&store, &client_id, client_secret.as_deref()).await?
     };
 
     let tenant_id = global

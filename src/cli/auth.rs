@@ -200,9 +200,14 @@ pub async fn execute(command: AuthCommands, global: &GlobalArgs) -> miette::Resu
                 .as_deref()
                 .ok_or_else(|| miette::miette!("No refresh token available"))?;
 
-            let new_tokens = crate::auth::refresh::refresh_token(&client_id, refresh_token)
-                .await
-                .map_err(|e| miette::miette!("{e}"))?;
+            let client_secret = std::env::var("XERO_CLIENT_SECRET").ok();
+            let new_tokens = crate::auth::refresh::refresh_token(
+                &client_id,
+                client_secret.as_deref(),
+                refresh_token,
+            )
+            .await
+            .map_err(|e| miette::miette!("{e}"))?;
 
             store
                 .save(&new_tokens)
